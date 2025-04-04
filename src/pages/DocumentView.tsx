@@ -4,14 +4,16 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Document } from '@/types';
 import { getDocumentById } from '@/services/documentService';
-import { ArrowLeft, Loader2, FileText, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Loader2, FileText, CheckCircle2, Pen } from 'lucide-react';
 import { useWallet } from '@/context/WalletContext';
 import DocumentViewer from '@/components/DocumentViewer';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const DocumentView = () => {
   const { id } = useParams<{ id: string }>();
   const [document, setDocument] = useState<Document | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [mode, setMode] = useState<'view' | 'edit'>('view');
   const navigate = useNavigate();
   const { isConnected } = useWallet();
 
@@ -81,7 +83,21 @@ const DocumentView = () => {
                 <FileText className="h-6 w-6 text-sui-teal mr-2" />
                 <h1 className="text-2xl font-bold text-gray-900">{document.title}</h1>
               </div>
-              {getStatusIndicator()}
+              <div className="flex items-center space-x-4">
+                {getStatusIndicator()}
+                
+                {document.status !== 'completed' && isConnected && (
+                  <Tabs value={mode} onValueChange={(value) => setMode(value as 'view' | 'edit')} className="w-[200px]">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="view">View</TabsTrigger>
+                      <TabsTrigger value="edit">
+                        <Pen className="w-3 h-3 mr-1" />
+                        Sign
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                )}
+              </div>
             </div>
             
             {!isConnected && (
@@ -95,6 +111,7 @@ const DocumentView = () => {
             <DocumentViewer 
               document={document} 
               onDocumentUpdate={loadDocument}
+              editMode={mode === 'edit' && isConnected}
             />
           </>
         ) : (
