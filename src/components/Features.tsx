@@ -1,6 +1,5 @@
-
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useWallet } from '@/context/WalletContext';
 import { 
@@ -28,7 +27,14 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Features = () => {
-  const { connectWallet } = useWallet();
+  const { connectWallet, isConnected } = useWallet();
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    if (isConnected) {
+      navigate('/dashboard');
+    }
+  }, [isConnected, navigate]);
 
   const handleConnectWallet = async () => {
     try {
@@ -37,7 +43,7 @@ const Features = () => {
       console.error('Failed to connect wallet:', error);
     }
   };
-
+  
   return (
     <div className="min-h-screen">
       {/* Hero Section */}

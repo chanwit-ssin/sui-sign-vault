@@ -1,22 +1,9 @@
 
-import React, { useEffect } from 'react';
-import { useWallet } from '@/context/WalletContext';
-import Login from './Login';
-import Dashboard from './Dashboard';
+import React from 'react';
 import Features from '@/components/Features';
 
 const Index = () => {
-  const { isConnected } = useWallet();
-  
-  useEffect(() => {
-    // You could add any initial loading here
-  }, []);
-
-  if (!isConnected) {
-    return <Features />;
-  }
-
-  return <Dashboard />;
+  return <Features />;
 };
 
 export default Index;
