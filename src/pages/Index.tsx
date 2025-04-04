@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { useWallet } from '@/context/WalletContext';
 import Login from './Login';
 import Dashboard from './Dashboard';
+import Features from '@/components/Features';
 
 const Index = () => {
   const { isConnected } = useWallet();
@@ -12,7 +13,7 @@ const Index = () => {
   }, []);
 
   if (!isConnected) {
-    return <Login />;
+    return <Features />;
   }
 
   return <Dashboard />;

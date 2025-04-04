@@ -3,7 +3,8 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useWallet } from '@/context/WalletContext';
 import { useNavigate } from 'react-router-dom';
-import { Wallet } from 'lucide-react';
+import { Wallet, ShieldCheck, FileText, Zap } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const Login = () => {
   const { connectWallet } = useWallet();
@@ -31,11 +32,25 @@ const Login = () => {
           </p>
           
           <div className="space-y-4">
-            <div className="bg-gray-50 p-4 rounded-md">
-              <h3 className="font-medium text-gray-700 mb-2">Secure Document Signing</h3>
-              <p className="text-sm text-gray-600">
-                Use your Sui wallet to sign documents with cryptographic proof on the blockchain.
-              </p>
+            <Alert className="bg-blue-50 border-blue-100">
+              <AlertDescription className="text-sm text-blue-800">
+                Connect your Sui wallet to access secure document signing
+              </AlertDescription>
+            </Alert>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="bg-gray-50 p-3 rounded-md text-center">
+                <FileText className="h-6 w-6 text-sui-teal mx-auto mb-2" />
+                <p className="text-xs text-gray-600">Upload Documents</p>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-md text-center">
+                <ShieldCheck className="h-6 w-6 text-sui-teal mx-auto mb-2" />
+                <p className="text-xs text-gray-600">Secure Signing</p>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-md text-center">
+                <Zap className="h-6 w-6 text-sui-teal mx-auto mb-2" />
+                <p className="text-xs text-gray-600">Blockchain Verified</p>
+              </div>
             </div>
             
             <Button 
