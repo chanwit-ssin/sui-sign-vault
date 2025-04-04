@@ -13,6 +13,7 @@ export interface Document {
   content?: string;
   fileUrl?: string;
   signatureFields: SignatureField[];
+  sharedWith?: string[]; // Array of wallet addresses the document is shared with
 }
 
 export interface SignatureField {

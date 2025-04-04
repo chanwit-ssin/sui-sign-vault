@@ -17,7 +17,8 @@ const mockDocuments: Document[] = [
         width: 200,
         height: 60,
       }
-    ]
+    ],
+    sharedWith: []
   },
   {
     id: 'doc-2',
@@ -25,7 +26,8 @@ const mockDocuments: Document[] = [
     uploadedBy: '0xuser1',
     uploadedAt: new Date('2025-03-30'),
     status: 'draft',
-    signatureFields: []
+    signatureFields: [],
+    sharedWith: []
   }
 ];
 
@@ -105,11 +107,31 @@ export const uploadDocument = async (title: string, uploadedBy: string): Promise
     uploadedBy,
     uploadedAt: new Date(),
     status: 'draft',
-    signatureFields: []
+    signatureFields: [],
+    sharedWith: []
   };
   
   // In a real app, this would save to the backend
   mockDocuments.push(newDoc);
   
   return newDoc;
+};
+
+export const shareDocument = async (documentId: string, addresses: string[]): Promise<boolean> => {
+  // Simulate API call delay
+  await new Promise(resolve => setTimeout(resolve, 800));
+  
+  const docIndex = mockDocuments.findIndex(doc => doc.id === documentId);
+  if (docIndex >= 0) {
+    // Add unique addresses only
+    const currentShared = mockDocuments[docIndex].sharedWith || [];
+    const uniqueAddresses = [...new Set([...currentShared, ...addresses])];
+    
+    // Update the document
+    mockDocuments[docIndex].sharedWith = uniqueAddresses;
+    
+    return true;
+  }
+  
+  return false;
 };

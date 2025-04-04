@@ -3,19 +3,22 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Document } from '@/types';
-import { getDocumentById } from '@/services/documentService';
-import { ArrowLeft, Loader2, FileText, CheckCircle2, Pen } from 'lucide-react';
+import { getDocumentById, shareDocument } from '@/services/documentService';
+import { ArrowLeft, Loader2, FileText, CheckCircle2, Pen, Share2, Users } from 'lucide-react';
 import { useWallet } from '@/context/WalletContext';
 import DocumentViewer from '@/components/DocumentViewer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from '@/lib/toast';
+import ShareModal from '@/components/ShareModal';
 
 const DocumentView = () => {
   const { id } = useParams<{ id: string }>();
   const [document, setDocument] = useState<Document | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [mode, setMode] = useState<'view' | 'edit'>('view');
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const navigate = useNavigate();
-  const { isConnected } = useWallet();
+  const { isConnected, account } = useWallet();
 
   const loadDocument = async () => {
     if (!id) return;
@@ -59,6 +62,30 @@ const DocumentView = () => {
     );
   };
 
+  const canShare = () => {
+    if (!document || !account) return false;
+    // Only the document uploader can share it
+    return document.uploadedBy === account.address;
+  };
+
+  const isShared = () => {
+    if (!document) return false;
+    return !!document.sharedWith && document.sharedWith.length > 0;
+  };
+
+  const handleShareDocument = async (addresses: string[]) => {
+    if (!document || !id) return;
+    
+    try {
+      await shareDocument(id, addresses);
+      toast.success('Document shared successfully');
+      loadDocument(); // Reload document to get updated sharing status
+    } catch (error) {
+      console.error('Error sharing document:', error);
+      toast.error('Failed to share document');
+    }
+  };
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -86,16 +113,39 @@ const DocumentView = () => {
               <div className="flex items-center space-x-4">
                 {getStatusIndicator()}
                 
-                {document.status !== 'completed' && isConnected && (
-                  <Tabs value={mode} onValueChange={(value) => setMode(value as 'view' | 'edit')} className="w-[200px]">
-                    <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="view">View</TabsTrigger>
-                      <TabsTrigger value="edit">
-                        <Pen className="w-3 h-3 mr-1" />
-                        Sign
-                      </TabsTrigger>
-                    </TabsList>
-                  </Tabs>
+                {isConnected && (
+                  <div className="flex items-center space-x-2">
+                    {canShare() && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setIsShareModalOpen(true)}
+                        className="flex items-center"
+                      >
+                        <Share2 className="w-4 h-4 mr-1" />
+                        Share
+                      </Button>
+                    )}
+                    
+                    {isShared() && (
+                      <div className="flex items-center text-gray-600 text-sm">
+                        <Users className="w-4 h-4 text-sui-teal mr-1" />
+                        <span>{document.sharedWith?.length}</span>
+                      </div>
+                    )}
+                    
+                    {document.status !== 'completed' && (
+                      <Tabs value={mode} onValueChange={(value) => setMode(value as 'view' | 'edit')} className="w-[200px]">
+                        <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="view">View</TabsTrigger>
+                          <TabsTrigger value="edit">
+                            <Pen className="w-3 h-3 mr-1" />
+                            Sign
+                          </TabsTrigger>
+                        </TabsList>
+                      </Tabs>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -112,6 +162,13 @@ const DocumentView = () => {
               document={document} 
               onDocumentUpdate={loadDocument}
               editMode={mode === 'edit' && isConnected}
+            />
+            
+            <ShareModal 
+              isOpen={isShareModalOpen}
+              onClose={() => setIsShareModalOpen(false)}
+              onConfirm={handleShareDocument}
+              currentShares={document.sharedWith || []}
             />
           </>
         ) : (
