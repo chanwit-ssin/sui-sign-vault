@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Loader2 } from 'lucide-react';
 import { useWallet } from '@/context/WalletContext';
+import { toast } from '@/lib/toast';
 
 interface SignatureModalProps {
   isOpen: boolean;
