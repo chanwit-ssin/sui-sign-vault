@@ -6,7 +6,7 @@ import { FileSignature, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SignatureModal from './SignatureModal';
 import { signDocument } from '@/services/documentService';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/lib/toast';
 import { format } from 'date-fns';
 
 interface DocumentViewerProps {

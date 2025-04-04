@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Loader2, Upload } from 'lucide-react';
 import { useWallet } from '@/context/WalletContext';
 import { uploadDocument } from '@/services/documentService';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/lib/toast';
 
 interface UploadDocumentModalProps {
   isOpen: boolean;

@@ -1,7 +1,6 @@
-
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 import { WalletAccount } from '@/types';
-import { toast } from '@/components/ui/sonner';
+import { toast } from '@/lib/toast';
 
 interface WalletContextType {
   isConnected: boolean;
@@ -47,7 +46,6 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
       setIsConnected(true);
       
       toast.success('Wallet connected!');
-      return mockAccount;
     } catch (error) {
       console.error('Failed to connect wallet:', error);
       toast.error('Failed to connect wallet');
