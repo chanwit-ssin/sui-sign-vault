@@ -6,7 +6,7 @@ import { toast } from '@/lib/toast';
 interface WalletContextType {
   isConnected: boolean;
   account: WalletAccount | null;
-  connectWallet: () => Promise<void>;
+  connectWallet: (walletType?: string) => Promise<void>;
   disconnectWallet: () => void;
   signMessage: (message: string) => Promise<string | null>;
 }
@@ -62,32 +62,60 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
     }
   };
 
-  const connectWallet = async () => {
+  // Mock wallet for testing - will be used as a fallback and for 'mock' wallet type
+  const connectToMockWallet = async (): Promise<WalletAccount> => {
+    // Mock successful connection
+    return {
+      address: '0x' + Array(40).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
+      publicKey: 'mock_public_key_' + Math.random().toString(36).substring(2, 15),
+    };
+  };
+
+  // Mock Ethos wallet for UI demonstration
+  const connectToEthosWallet = async (): Promise<WalletAccount> => {
+    // Mock successful connection with an Ethos-like address
+    return {
+      address: '0x' + Array(40).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
+      publicKey: 'ethos_public_key_' + Math.random().toString(36).substring(2, 15),
+    };
+  };
+
+  const connectWallet = async (preferredWalletType?: string) => {
     try {
-      console.log('Connecting to wallet...');
+      console.log('Connecting to wallet...', preferredWalletType);
       let connectedAccount: WalletAccount;
+      let selectedWalletType = preferredWalletType || 'sui';
       
-      if (isSuiWalletAvailable()) {
-        connectedAccount = await connectToSuiWallet();
-        setWalletType('sui');
-      } else {
-        // Fallback to mock wallet if Sui wallet is not available
-        // This is helpful for development and testing
-        console.log('Sui wallet not detected, using mock wallet');
-        
-        // Mock successful connection
-        connectedAccount = {
-          address: '0x' + Array(40).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
-          publicKey: 'sui_public_key_' + Math.random().toString(36).substring(2, 15),
-        };
-        
-        setWalletType('mock');
+      switch (selectedWalletType) {
+        case 'sui':
+          if (isSuiWalletAvailable()) {
+            connectedAccount = await connectToSuiWallet();
+            setWalletType('sui');
+          } else {
+            throw new Error('Sui wallet not detected. Please install the extension');
+          }
+          break;
+          
+        case 'ethos':
+          connectedAccount = await connectToEthosWallet();
+          setWalletType('ethos');
+          break;
+          
+        case 'mock':
+        default:
+          console.log('Using mock wallet');
+          connectedAccount = await connectToMockWallet();
+          setWalletType('mock');
+          break;
       }
       
       setAccount(connectedAccount);
       setIsConnected(true);
       
-      toast.success(`Wallet connected: ${walletType === 'sui' ? 'Sui Wallet' : 'Mock Wallet'}`);
+      const walletName = selectedWalletType === 'sui' ? 'Sui Wallet' : 
+                         selectedWalletType === 'ethos' ? 'Ethos Wallet' : 'Demo Wallet';
+      
+      toast.success(`Wallet connected: ${walletName}`);
     } catch (error) {
       console.error('Failed to connect wallet:', error);
       toast.error('Failed to connect wallet: ' + (error instanceof Error ? error.message : 'Unknown error'));
@@ -121,7 +149,7 @@ export const WalletProvider = ({ children }: WalletProviderProps) => {
         return signature.signature;
       } else {
         // Mock signing for development
-        console.log(`Signing message: ${message}`);
+        console.log(`Signing message with ${walletType} wallet: ${message}`);
         
         // Mock signing delay
         await new Promise(resolve => setTimeout(resolve, 1500));

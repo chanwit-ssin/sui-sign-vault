@@ -5,28 +5,18 @@ import { Button } from '@/components/ui/button';
 import { 
   UserCircle, 
   LogOut, 
-  ChevronDown,
   Wallet
 } from 'lucide-react';
 import { useLocation, Link } from 'react-router-dom';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import WalletConnectDialog from '@/components/WalletConnectDialog';
 
 const Header = () => {
-  const { isConnected, account, connectWallet, disconnectWallet } = useWallet();
+  const { isConnected, account, disconnectWallet } = useWallet();
   const location = useLocation();
+  const [walletDialogOpen, setWalletDialogOpen] = useState(false);
 
   const truncateAddress = (address: string) => {
     return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
-  };
-
-  // Function to detect available wallets
-  const isSuiWalletInstalled = (): boolean => {
-    return typeof window !== 'undefined' && 'suiWallet' in window;
   };
 
   return (
@@ -87,39 +77,19 @@ const Header = () => {
                 </Button>
               </div>
             ) : (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button className="bg-sui-teal hover:bg-sui-teal/90">
-                    <Wallet className="mr-2 h-4 w-4" />
-                    Connect Wallet
-                    <ChevronDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem 
-                    onClick={connectWallet} 
-                    disabled={!isSuiWalletInstalled()} 
-                    className="cursor-pointer"
-                  >
-                    <div className="flex items-center">
-                      <div className="w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center mr-2">
-                        <span className="text-white font-bold text-xs">S</span>
-                      </div>
-                      Sui Wallet
-                      {!isSuiWalletInstalled() && (
-                        <span className="ml-2 text-xs text-gray-500">(Not installed)</span>
-                      )}
-                    </div>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={connectWallet} className="cursor-pointer">
-                    <div className="flex items-center">
-                      <Wallet className="mr-2 h-4 w-4 text-gray-600" />
-                      Demo Wallet
-                    </div>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button 
+                className="bg-sui-teal hover:bg-sui-teal/90"
+                onClick={() => setWalletDialogOpen(true)}
+              >
+                <Wallet className="mr-2 h-4 w-4" />
+                Connect Wallet
+              </Button>
             )}
+
+            <WalletConnectDialog 
+              open={walletDialogOpen} 
+              onOpenChange={setWalletDialogOpen} 
+            />
           </div>
         </div>
       </div>
