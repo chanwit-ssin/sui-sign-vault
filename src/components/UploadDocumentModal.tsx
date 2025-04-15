@@ -14,6 +14,16 @@ import { Loader2, Upload } from 'lucide-react';
 import { useWallet } from '@/context/WalletContext';
 import { uploadDocument } from '@/services/documentService';
 import { toast } from '@/lib/toast';
+import { useWallet as useSuiWallet } from "@suiet/wallet-kit";
+import { bcs } from '@mysten/bcs';
+import { Transaction } from '@mysten/sui/transactions';
+import { getFullnodeUrl, SuiClient } from '@mysten/sui/client';
+
+// Constants
+const PACKAGE_ID = "0xcf7aa4af593290d9552ccf225c777697c7113c6722b417bcdb1965417a94f550";
+const MODULE = "document";
+const rpcUrl = getFullnodeUrl('devnet');
+const client = new SuiClient({ url: rpcUrl });
 
 interface UploadDocumentModalProps {
   isOpen: boolean;
@@ -30,11 +40,34 @@ const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const { account } = useWallet();
+  const wallet = useSuiWallet();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
     }
+  };
+
+  const registerDocument = async (docHash: string, cid: string) => {
+    if (!wallet.connected) throw new Error("Wallet not connected");
+    
+    const txb = new Transaction();
+    const docHashBytes = bcs.string().serialize(docHash);
+    const cidBytes = bcs.string().serialize(cid);
+
+    txb.moveCall({
+      target: `${PACKAGE_ID}::${MODULE}::register_document`,
+      arguments: [
+        txb.pure(docHashBytes),
+        txb.pure(cidBytes),
+      ],
+    });
+
+    txb.setGasBudget(50_000_000); // 0.05 SUI
+
+    return wallet.signAndExecuteTransaction({
+      transaction: txb
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,8 +90,19 @@ const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
     
     setIsUploading(true);
     try {
-      await uploadDocument(title, account.address);
-      toast.success('Document uploaded successfully');
+      // Step 1: Upload document to your service
+      const uploadResponse = await uploadDocument(title, account.address);
+      
+      // Step 2: Register document on blockchain
+      // In a real app, you'd generate these properly
+      const docHash = "sample-hash-" + Math.random().toString(36).substring(2);
+      const cid = "ipfs-cid-" + Math.random().toString(36).substring(2);
+      
+      const txResult = await registerDocument(docHash, cid);
+      
+      toast.success('Document uploaded and registered successfully');
+      console.log('Transaction result:', txResult);
+      
       onSuccess();
       onClose();
       setTitle('');
