@@ -9,17 +9,48 @@ import {
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { useWallet } from '@/context/WalletContext';
+import { useWallet as suiWallet, ConnectButton } from "@suiet/wallet-kit";
+
 
 interface WalletConnectDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+const WalletSelector = () => {
+  const {
+    select,  // select 
+    configuredWallets,  // default wallets
+    detectedWallets,  // Sui-standard wallets detected from browser env
+    allAvailableWallets,  // all the installed Sui-standard wallets
+  } = suiWallet();
 
+  console.log(select)
+  console.log(configuredWallets)
+  console.log(detectedWallets)
+  console.log(allAvailableWallets)
+  return [...configuredWallets, ...detectedWallets].map((wallet) => (
+    <button
+      key={wallet.name}
+      onClick={() => {
+        // check if user installed the wallet
+        if (!wallet.installed) {
+          // do something like guiding users to install
+          return;
+        }
+        select(wallet.name);
+      }}
+    >
+      Connect to {wallet.name}
+    </button>
+  ));
+}
 const WalletConnectDialog = ({
   open,
   onOpenChange
 }: WalletConnectDialogProps) => {
   const { connectWallet } = useWallet();
+  const wallet = suiWallet();
+
 
   const handleConnectWallet = async (walletType: string) => {
     try {
@@ -40,13 +71,7 @@ const WalletConnectDialog = ({
       <DialogContent className="sm:max-w-md rounded-xl">
         <DialogHeader className="text-center pb-0">
           <div className="absolute right-4 top-4">
-            <Button 
-              variant="ghost" 
-              className="h-8 w-8 p-0 rounded-full" 
-              onClick={() => onOpenChange(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+
           </div>
           <div className="mx-auto mb-5">
             <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto">
@@ -63,7 +88,7 @@ const WalletConnectDialog = ({
 
         <div className="space-y-2 py-4">
           <div className="space-y-2">
-            <div 
+            <div
               className={`flex items-center justify-between p-3 rounded-lg border ${isSuiWalletInstalled() ? 'cursor-pointer hover:bg-gray-50' : 'opacity-60 cursor-not-allowed'}`}
               onClick={() => isSuiWalletInstalled() && handleConnectWallet('sui')}
             >
@@ -73,9 +98,18 @@ const WalletConnectDialog = ({
                 </div>
                 <div>
                   <p className="font-medium">Sui Wallet</p>
-                  {!isSuiWalletInstalled() && (
-                    <p className="text-xs text-gray-500">Not installed</p>
-                  )}
+                  <ConnectButton
+                    onConnectSuccess={() => handleConnectWallet('mock')}
+                    onConnectError={(error) => {
+                      if (error.code === ErrorCode.WALLET__CONNECT_ERROR__USER_REJECTED) {
+                        console.warn(
+                          "user rejected the connection to " + error.details?.wallet
+                        );
+                      } else {
+                        console.warn("unknown connect error: ", error);
+                      }
+                    }}
+                  />
                 </div>
               </div>
               {isSuiWalletInstalled() && (
@@ -83,35 +117,8 @@ const WalletConnectDialog = ({
               )}
             </div>
 
-            <div 
-              className="flex items-center justify-between p-3 rounded-lg border cursor-pointer hover:bg-gray-50"
-              onClick={() => handleConnectWallet('ethos')}
-            >
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 bg-purple-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold text-lg">E</span>
-                </div>
-                <p className="font-medium">Ethos Wallet</p>
-              </div>
-            </div>
-            
-            <div 
-              className="flex items-center justify-between p-3 rounded-lg border cursor-pointer hover:bg-gray-50"
-              onClick={() => handleConnectWallet('mock')}
-            >
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 bg-gray-600 rounded-full flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M2 6h20v12H2z"></path>
-                    <path d="M2 12h20"></path>
-                    <path d="M6 12v6"></path>
-                  </svg>
-                </div>
-                <p className="font-medium">Demo Wallet</p>
-              </div>
-            </div>
           </div>
-          
+
           <div className="mt-6 pt-3 border-t border-gray-100 text-center">
             <p className="text-xs text-gray-500">
               By connecting your wallet to SuiSign, you agree to our
