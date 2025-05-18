@@ -25,11 +25,11 @@ import { Ed25519Keypair, Ed25519PublicKey } from "@mysten/sui/keypairs/ed25519";
 import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
 
 // use getFullnodeUrl to define Devnet RPC location
-const rpcUrl = getFullnodeUrl("devnet");
+const rpcUrl = getFullnodeUrl("testnet");
 const suiClient = new SuiClient({ url: rpcUrl });
 
 const PACKAGE_ID =
-  "0xcf7aa4af593290d9552ccf225c777697c7113c6722b417bcdb1965417a94f550";
+  "0x9822769c16f703f6a43460dfa763252bac6bc216c39a630dbe95e36a5db4122e";
 const MODULE = "document";
 const NETWORK = "devnet";
 

@@ -185,6 +185,7 @@ export const uploadDocument = async (
   function getPublisherUrl(path: string): string {
     const service = WALRUS_SERVICES.find((s) => s.id === walrusServiceId);
     const cleanPath = path.replace(/^\/+/, "").replace(/^v1\//, "");
+    console.log("getPublisherUrl", `${service?.publisherUrl}/v1/${cleanPath}`);
     return `${service?.publisherUrl}/v1/${cleanPath}`;
   }
 

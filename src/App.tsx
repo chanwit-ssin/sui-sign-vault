@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -35,7 +34,8 @@ const App = () => (
             </main>
             <footer className="bg-white border-t border-gray-200 py-4">
               <div className="container mx-auto px-4 text-center text-sm text-gray-500">
-                © {new Date().getFullYear()} SuiSign Vault. Powered by Sui blockchain.
+                © {new Date().getFullYear()} SuiSign Vault. Powered by Sui
+                blockchain.
               </div>
             </footer>
           </div>

@@ -1,5 +1,5 @@
 export const TESTNET_PACKAGE_ID =
-  "0xcf7aa4af593290d9552ccf225c777697c7113c6722b417bcdb1965417a94f550";
+  "0x9822769c16f703f6a43460dfa763252bac6bc216c39a630dbe95e36a5db4122e";
 export const TESTNET_GQL_CLIENT = "https://sui-testnet.mystenlabs.com/graphql";
 export const WALRUS_SERVICES = [
   {
