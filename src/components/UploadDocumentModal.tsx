@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import React, { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -7,24 +7,25 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Loader2, Upload } from 'lucide-react';
-import { useWallet } from '@/context/WalletContext';
-import { uploadDocument } from '@/services/documentService';
-import { toast } from '@/lib/toast';
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Loader2, Upload } from "lucide-react";
+import { useWallet } from "@/context/WalletContext";
+import { uploadDocument } from "@/services/documentService";
+import { toast } from "@/lib/toast";
 import { useWallet as useSuiWallet } from "@suiet/wallet-kit";
-import { bcs } from '@mysten/bcs';
-import { Transaction } from '@mysten/sui/transactions';
-import { getFullnodeUrl, SuiClient } from '@mysten/sui/client';
+import { bcs } from "@mysten/bcs";
+import { Transaction } from "@mysten/sui/transactions";
+import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
 
 // Constants
-const PACKAGE_ID = "0xcf7aa4af593290d9552ccf225c777697c7113c6722b417bcdb1965417a94f550";
+const PACKAGE_ID =
+  "0xcf7aa4af593290d9552ccf225c777697c7113c6722b417bcdb1965417a94f550";
 const MODULE = "document";
-const rpcUrl = getFullnodeUrl('devnet');
+const rpcUrl = getFullnodeUrl("testnet");
 const client = new SuiClient({ url: rpcUrl });
-
+console.log("Sui Client initialized:", client);
 interface UploadDocumentModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -36,80 +37,96 @@ const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const [title, setTitle] = useState('');
+  const [title, setTitle] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const { account } = useWallet();
   const wallet = useSuiWallet();
+  const [previewUrl, setPreviewUrl] = useState<string>("");
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+    const f = e.target.files?.[0] ?? null;
+    setFile(f);
+    if (f) {
+      // สร้าง URL สำหรับ preview
+      const url = URL.createObjectURL(f);
+      setPreviewUrl(url);
+    } else {
+      setPreviewUrl("");
     }
   };
 
+  // ทำความสะอาด URL เมื่อ component ถูก unmount หรือ file เปลี่ยน
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
   const registerDocument = async (docHash: string, cid: string) => {
     if (!wallet.connected) throw new Error("Wallet not connected");
-    
+
     const txb = new Transaction();
     const docHashBytes = bcs.string().serialize(docHash);
     const cidBytes = bcs.string().serialize(cid);
 
     txb.moveCall({
       target: `${PACKAGE_ID}::${MODULE}::register_document`,
-      arguments: [
-        txb.pure(docHashBytes),
-        txb.pure(cidBytes),
-      ],
+      arguments: [txb.pure(docHashBytes), txb.pure(cidBytes)],
     });
 
     txb.setGasBudget(50_000_000); // 0.05 SUI
 
     return wallet.signAndExecuteTransaction({
-      transaction: txb
+      transaction: txb,
     });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!title.trim()) {
-      toast.error('Please enter a document title');
+      toast.error("Please enter a document title");
       return;
     }
-    
+
     if (!file) {
-      toast.error('Please select a file to upload');
+      toast.error("Please select a file to upload");
       return;
     }
-    
+
     if (!account) {
-      toast.error('Please connect your wallet');
+      toast.error("Please connect your wallet");
       return;
     }
-    
+
     setIsUploading(true);
     try {
       // Step 1: Upload document to your service
-      const uploadResponse = await uploadDocument(title, account.address);
-      
+      const uploadResponse = await uploadDocument(
+        title,
+        account.address,
+        file,
+        PACKAGE_ID,
+        rpcUrl
+      );
       // Step 2: Register document on blockchain
       // In a real app, you'd generate these properly
       const docHash = "sample-hash-" + Math.random().toString(36).substring(2);
       const cid = "ipfs-cid-" + Math.random().toString(36).substring(2);
-      
+
       const txResult = await registerDocument(docHash, cid);
-      
-      toast.success('Document uploaded and registered successfully');
-      console.log('Transaction result:', txResult);
-      
+
+      toast.success("Document uploaded and registered successfully");
+      console.log("Transaction result:", txResult);
+
       onSuccess();
       onClose();
-      setTitle('');
+      setTitle("");
       setFile(null);
     } catch (error) {
-      console.error('Error uploading document:', error);
-      toast.error('Failed to upload document');
+      console.error("Error uploading document:", error);
+      toast.error("Failed to upload document");
     } finally {
       setIsUploading(false);
     }
@@ -147,25 +164,62 @@ const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
                     <Upload className="w-8 h-8 mb-2 text-gray-500" />
                     <p className="mb-2 text-sm text-gray-500">
-                      <span className="font-semibold">Click to upload</span> or drag and drop
+                      <span className="font-semibold">Click to upload</span> or
+                      drag and drop
                     </p>
-                    <p className="text-xs text-gray-500">PDF, DOCX (MAX. 10MB)</p>
+                    <p className="text-xs text-gray-500">
+                      PDF, DOCX (MAX. 10MB)
+                    </p>
                   </div>
                   <Input
                     id="file"
                     type="file"
                     className="hidden"
-                    accept=".pdf,.docx"
+                    accept=".pdf,.docx,.png,.jpg,.jpeg"
                     onChange={handleFileChange}
                     disabled={isUploading}
                   />
                 </label>
               </div>
               {file && (
-                <p className="text-sm text-gray-500 truncate">Selected: {file.name}</p>
+                <p className="text-sm text-gray-500 truncate">
+                  Selected: {file.name}
+                </p>
               )}
             </div>
           </div>
+          {file && (
+            <div className="mt-4">
+              <p className="text-sm text-gray-600 mb-2">Preview:</p>
+              {/* กรณีเป็นรูปภาพ */}
+              {file.type.startsWith("image/") && (
+                <img
+                  src={previewUrl}
+                  alt="Preview"
+                  className="max-w-full max-h-64 object-contain border"
+                />
+              )}
+              {/* กรณีเป็น PDF */}
+              {file.type === "application/pdf" && (
+                <iframe
+                  src={previewUrl}
+                  title="PDF Preview"
+                  className="w-full h-64 border"
+                />
+              )}
+              {/* กรณีเป็น DOCX (แสดงลิงก์ดาวน์โหลดแทน) */}
+              {file.type ===
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document" && (
+                <a
+                  href={previewUrl}
+                  download={file.name}
+                  className="text-blue-600 underline"
+                >
+                  ดาวน์โหลดไฟล์ {file.name}
+                </a>
+              )}
+            </div>
+          )}
           <DialogFooter className="mt-4">
             <Button
               type="button"
@@ -180,9 +234,7 @@ const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
               className="bg-sui-teal hover:bg-sui-teal/90"
               disabled={isUploading || !title || !file || !account}
             >
-              {isUploading && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
+              {isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Upload
             </Button>
           </DialogFooter>

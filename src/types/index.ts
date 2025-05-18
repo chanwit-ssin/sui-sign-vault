@@ -1,4 +1,3 @@
-
 export interface WalletAccount {
   address: string;
   publicKey: string;
@@ -9,7 +8,7 @@ export interface Document {
   title: string;
   uploadedBy: string;
   uploadedAt: Date;
-  status: 'draft' | 'pending' | 'signed' | 'completed';
+  status: "draft" | "pending" | "signed" | "completed";
   content?: string;
   fileUrl?: string;
   signatureFields: SignatureField[];
@@ -25,4 +24,11 @@ export interface SignatureField {
   signedBy?: string;
   signedAt?: Date;
   transactionId?: string;
+  blobId?: string; // ID of the blob in Walrus
+}
+
+export interface UploadedDoc {
+  title: string;
+  blobId: string;
+  uploadedAt: Date;
 }

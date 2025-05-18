@@ -6,6 +6,17 @@ import { TESTNET_PACKAGE_ID, WALRUS_SERVICES } from "@/config/constants";
 import { useSignAndExecuteTransaction, useSuiClient } from "@mysten/dapp-kit";
 import { useNetworkVariable } from "@/config/networkConfig";
 
+const SUI_VIEW_TX_URL = `https://suiscan.xyz/testnet/tx`;
+const SUI_VIEW_OBJECT_URL = `https://suiscan.xyz/testnet/object`;
+
+const NUM_EPOCH = 2;
+const packageId = useNetworkVariable("packageId");
+const suiClient = useSuiClient();
+const sealClient = new SealClient({
+  suiClient,
+  serverObjectIds: getAllowlistedKeyServers("testnet"),
+  verifyKeyServers: false,
+});
 // Mock documents for demonstration
 
 const mockDocuments: Document[] = [
@@ -111,69 +122,27 @@ export const signDocument = async (
   return false;
 };
 
-export type UploadResult = {
-  document: Document;
-  previewDataUrl: string; // <— คืน Data URL สำหรับพรีวิว
-};
-
 export const uploadDocument = async (
   title: string,
   uploadedBy: string,
   file: File,
-  PACKAGE_ID: string,
-  rpcUrl: string,
+
   walrusServiceId: string = WALRUS_SERVICES[0].id
 ): Promise<Document> => {
-  const SUI_VIEW_TX_URL = `https://suiscan.xyz/testnet/tx`;
-  const SUI_VIEW_OBJECT_URL = `https://suiscan.xyz/testnet/object`;
-
-  const NUM_EPOCH = 1;
-  // const packageId = useNetworkVariable("packageId");
-  const suiClient = new SuiClient({ url: rpcUrl });
-  const sealClient = new SealClient({
-    suiClient,
-    serverObjectIds: getAllowlistedKeyServers("testnet"),
-    verifyKeyServers: false,
-  });
-
   // 1) อ่านไฟล์เป็น Uint8Array
   const buffer = await file.arrayBuffer();
   const data = new Uint8Array(buffer);
 
-  const previewDataUrl = await new Promise<string>((res, rej) => {
-    const reader = new FileReader();
-    reader.onload = () => res(reader.result as string);
-    reader.onerror = () => rej(reader.error);
-    reader.readAsDataURL(file);
-  });
-
-  if (file.type === "application/pdf") {
-    // PDF มักจะเริ่มด้วย "%PDF-"
-    const header = new TextDecoder().decode(data.slice(0, 5));
-    console.log("PDF header:", header);
-  }
-
-  if (file.name.endsWith(".docx")) {
-    const magic = Array.from(data.slice(0, 4))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join(" ");
-    console.log("DOCX magic bytes:", magic);
-  }
-
-  if (file.type.startsWith("image/")) {
-    const dataUrl = await new Promise<string>((res, rej) => {
-      const reader = new FileReader();
-      reader.onload = () => res(reader.result as string);
-      reader.onerror = () => rej(reader.error);
-      reader.readAsDataURL(file);
-    });
-    console.log("Image preview Data URL:", dataUrl.slice(0, 100)); // แค่ส่วนต้นๆ
-  }
+  console.log("title:", title);
+  console.log("uploadedBy:", uploadedBy);
+  console.log("buffer:", buffer);
 
   // 2) สร้าง blob ID (policyId + nonce)
-  const policyBytes = fromHex(PACKAGE_ID);
+  const policyBytes = fromHex(TESTNET_PACKAGE_ID);
   const nonce = crypto.getRandomValues(new Uint8Array(5));
   const idHex = toHex(new Uint8Array([...policyBytes, ...nonce]));
+
+  // console.log("Blob ID:", idHex);
 
   // 4) อัปโหลด ciphertext ไปยัง Walrus
   function getAggregatorUrl(path: string): string {
@@ -188,7 +157,6 @@ export const uploadDocument = async (
     return `${service?.publisherUrl}/v1/${cleanPath}`;
   }
 
-  console.log("PACKAGE_ID", PACKAGE_ID);
   if (file) {
     const reader = new FileReader();
     reader.onload = async function (event) {
@@ -198,18 +166,14 @@ export const uploadDocument = async (
           const nonce = crypto.getRandomValues(new Uint8Array(5));
           const policyObjectBytes = fromHex(uploadedBy);
           const id = toHex(new Uint8Array([...policyObjectBytes, ...nonce]));
-
-          console.log("Blob ID:", id);
-          console.log("packageId:", PACKAGE_ID);
-          console.log("data:", new Uint8Array(result));
           const { encryptedObject: encryptedBytes } = await sealClient.encrypt({
             threshold: 2,
-            packageId: PACKAGE_ID,
+            packageId,
             id,
             data: new Uint8Array(result),
           });
           const storageInfo = await storeBlob(encryptedBytes);
-          displayUpload(storageInfo.info, file.type);
+          // displayUpload(storageInfo.info, file.type);
           // setIsUploading(false);
         } else {
           console.error("Unexpected result type:", typeof result);
@@ -221,42 +185,6 @@ export const uploadDocument = async (
   } else {
     console.error("No file selected");
   }
-
-  const displayUpload = (storage_info: any, media_type: any) => {
-    let info;
-    if ("alreadyCertified" in storage_info) {
-      info = {
-        status: "Already certified",
-        blobId: storage_info.alreadyCertified.blobId,
-        endEpoch: storage_info.alreadyCertified.endEpoch,
-        suiRefType: "Previous Sui Certified Event",
-        suiRef: storage_info.alreadyCertified.event.txDigest,
-        suiBaseUrl: SUI_VIEW_TX_URL,
-        blobUrl: getAggregatorUrl(
-          `/v1/blobs/${storage_info.alreadyCertified.blobId}`
-        ),
-        suiUrl: `${SUI_VIEW_OBJECT_URL}/${storage_info.alreadyCertified.event.txDigest}`,
-        isImage: media_type.startsWith("image"),
-      };
-    } else if ("newlyCreated" in storage_info) {
-      info = {
-        status: "Newly created",
-        blobId: storage_info.newlyCreated.blobObject.blobId,
-        endEpoch: storage_info.newlyCreated.blobObject.storage.endEpoch,
-        suiRefType: "Associated Sui Object",
-        suiRef: storage_info.newlyCreated.blobObject.id,
-        suiBaseUrl: SUI_VIEW_OBJECT_URL,
-        blobUrl: getAggregatorUrl(
-          `/v1/blobs/${storage_info.newlyCreated.blobObject.blobId}`
-        ),
-        suiUrl: `${SUI_VIEW_OBJECT_URL}/${storage_info.newlyCreated.blobObject.id}`,
-        isImage: media_type.startsWith("image"),
-      };
-    } else {
-      throw Error("Unhandled successful response!");
-    }
-    // setInfo(info);
-  };
 
   const storeBlob = (encryptedData: Uint8Array) => {
     return fetch(`${getPublisherUrl(`/v1/blobs?epochs=${NUM_EPOCH}`)}`, {
