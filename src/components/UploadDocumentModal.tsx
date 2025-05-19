@@ -18,6 +18,7 @@ import { useWallet as useSuiWallet } from "@suiet/wallet-kit";
 import { bcs } from "@mysten/bcs";
 import { Transaction } from "@mysten/sui/transactions";
 import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
+import { useSignAndExecuteTransaction, useSuiClient } from "@mysten/dapp-kit";
 
 // Constants
 const PACKAGE_ID =
@@ -31,6 +32,17 @@ interface UploadDocumentModalProps {
   onClose: () => void;
   onSuccess: () => void;
 }
+// const { mutate: signAndExecute } = useSignAndExecuteTransaction({
+//     execute: async ({ bytes, signature }) =>
+//       await client.executeTransactionBlock({
+//         transactionBlock: bytes,
+//         signature,
+//         options: {
+//           showRawEffects: true,
+//           showEffects: true,
+//         },
+//       }),
+//   });
 
 const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
   isOpen,
@@ -42,7 +54,48 @@ const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const { account } = useWallet();
   const wallet = useSuiWallet();
+
   const [previewUrl, setPreviewUrl] = useState<string>("");
+
+  const createAllowlist = async (name: string) => {
+    if (name === "") {
+      alert("Please enter a name for the allowlist");
+      return;
+    }
+    const tx = new Transaction();
+    tx.moveCall({
+      target: `${PACKAGE_ID}::allowlist::create_allowlist_entry`,
+      arguments: [tx.pure.string(name)],
+    });
+    tx.setGasBudget(10000000);
+    const response = await signAndExecute(
+      {
+        transaction: tx,
+      },
+      {
+        onSuccess: async (result) => {
+          console.log("res", result);
+          // Extract the created allowlist object ID from the transaction result
+          const allowlistObject = result.effects?.created?.find(
+            (item) =>
+              item.owner &&
+              typeof item.owner === "object" &&
+              "Shared" in item.owner
+          );
+          const capObject = result.effects?.created?.find(
+            (item) =>
+              item.owner && typeof item.owner === "object" && "AddressOwner"
+          );
+
+          const createdObjectId = allowlistObject?.reference?.objectId;
+          console.log("createdObjectId", createdObjectId);
+          const capId = capObject?.reference?.objectId;
+          console.log("capId", capId);
+        },
+      }
+    );
+    console.log("response", response);
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null;
