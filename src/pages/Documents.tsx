@@ -1,21 +1,20 @@
-
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Document } from '@/types';
-import { getDocuments } from '@/services/documentService';
-import { useWallet } from '@/context/WalletContext';
-import { Plus, Search, FileText, Loader2 } from 'lucide-react';
-import DocumentCard from '@/components/DocumentCard';
-import { Input } from '@/components/ui/input';
-import UploadDocumentModal from '@/components/UploadDocumentModal';
+import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Document } from "@/types";
+import { getDocuments } from "@/services/documentService";
+import { ConnectButton, useWallet } from "@suiet/wallet-kit";
+import { Plus, Search, FileText, Loader2 } from "lucide-react";
+import DocumentCard from "@/components/DocumentCard";
+import { Input } from "@/components/ui/input";
+import UploadDocumentModal from "@/components/UploadDocumentModal";
 
 const Documents = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const { isConnected } = useWallet();
+  const { account } = useWallet();
 
   const loadDocuments = async () => {
     setIsLoading(true);
@@ -24,7 +23,7 @@ const Documents = () => {
       setDocuments(docs);
       setFilteredDocuments(docs);
     } catch (error) {
-      console.error('Error fetching documents:', error);
+      console.error("Error fetching documents:", error);
     } finally {
       setIsLoading(false);
     }
@@ -35,10 +34,10 @@ const Documents = () => {
   }, []);
 
   useEffect(() => {
-    if (searchQuery.trim() === '') {
+    if (searchQuery.trim() === "") {
       setFilteredDocuments(documents);
     } else {
-      const filtered = documents.filter(doc => 
+      const filtered = documents.filter((doc) =>
         doc.title.toLowerCase().includes(searchQuery.toLowerCase())
       );
       setFilteredDocuments(filtered);
@@ -49,9 +48,9 @@ const Documents = () => {
     <div className="p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <h1 className="text-2xl font-bold text-gray-900">Documents</h1>
-        <Button 
+        <Button
           onClick={() => setIsUploadModalOpen(true)}
-          disabled={!isConnected}
+          disabled={!account}
           className="bg-sui-teal hover:bg-sui-teal/90"
         >
           <Plus className="mr-2 h-4 w-4" />
@@ -85,15 +84,19 @@ const Documents = () => {
       ) : (
         <div className="text-center py-12">
           <FileText className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-semibold text-gray-900">No documents found</h3>
+          <h3 className="mt-2 text-sm font-semibold text-gray-900">
+            No documents found
+          </h3>
           <p className="mt-1 text-sm text-gray-500">
-            {searchQuery ? "Try adjusting your search query." : "Get started by creating a new document."}
+            {searchQuery
+              ? "Try adjusting your search query."
+              : "Get started by creating a new document."}
           </p>
           {!searchQuery && (
             <div className="mt-6">
-              <Button 
+              <Button
                 onClick={() => setIsUploadModalOpen(true)}
-                disabled={!isConnected}
+                disabled={!account}
                 className="bg-sui-teal hover:bg-sui-teal/90"
               >
                 <Plus className="mr-2 h-4 w-4" />
@@ -103,7 +106,7 @@ const Documents = () => {
           )}
         </div>
       )}
-      
+
       <UploadDocumentModal
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}

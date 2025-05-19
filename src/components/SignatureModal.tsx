@@ -9,7 +9,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
-import { useWallet } from "@/context/WalletContext";
 import { toast } from "@/lib/toast";
 import {
   ConnectButton,
@@ -53,7 +52,7 @@ const SignatureModal: React.FC<SignatureModalProps> = ({
   documentTitle,
 }) => {
   const [isSigning, setIsSigning] = useState(false);
-  const { signMessage, account } = useWallet();
+  const { signMessage, account } = useSuiWallet();
   const wallet = useSuiWallet(); // Moved inside the component
 
   const signDocument = async () => {
@@ -97,7 +96,7 @@ const SignatureModal: React.FC<SignatureModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="w-full sm:max-w-lg lg:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Sign Document</DialogTitle>
           <DialogDescription>
