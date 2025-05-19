@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Document } from "@/types";
 import { getDocuments } from "@/services/documentService";
-import { useWallet } from "@/context/WalletContext";
+import { useWallet as useSuiWallet } from "@suiet/wallet-kit";
 import {
   Plus,
   FileText,
@@ -25,7 +25,7 @@ const Dashboard = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const { isConnected, account } = useWallet();
+  const { account } = useSuiWallet();
   const navigate = useNavigate();
 
   const loadDocuments = async () => {
@@ -60,7 +60,7 @@ const Dashboard = () => {
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
         <Button
           onClick={() => setIsUploadModalOpen(true)}
-          disabled={!isConnected}
+          disabled={!account}
           className="bg-sui-teal hover:bg-sui-teal/90"
         >
           <Plus className="mr-2 h-4 w-4" />
@@ -68,7 +68,7 @@ const Dashboard = () => {
         </Button>
       </div>
 
-      {!isConnected ? (
+      {!account ? (
         <div className="bg-blue-50 border border-blue-200 p-4 rounded-md mb-6">
           <p className="text-blue-700 flex items-center">
             <AlertCircle className="h-5 w-5 mr-2" />
@@ -149,7 +149,7 @@ const Dashboard = () => {
             <div className="mt-6">
               <Button
                 onClick={() => setIsUploadModalOpen(true)}
-                disabled={!isConnected}
+                disabled={!account}
                 className="bg-sui-teal hover:bg-sui-teal/90"
               >
                 <Plus className="mr-2 h-4 w-4" />

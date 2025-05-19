@@ -2,7 +2,7 @@ import { Document, SignatureField, UploadedDoc } from "@/types";
 import { fromHex, toHex } from "@mysten/sui/utils";
 import { SuiClient } from "@mysten/sui/client";
 import { SealClient, getAllowlistedKeyServers } from "@mysten/seal";
-import { TESTNET_PACKAGE_ID, WALRUS_SERVICES } from "@/config/constants";
+import { PACKAGE_ID, WALRUS_SERVICES } from "@/config/constants";
 import { useSignAndExecuteTransaction, useSuiClient } from "@mysten/dapp-kit";
 import { useNetworkVariable } from "@/config/networkConfig";
 import { useState } from "react";
@@ -134,8 +134,8 @@ export const uploadDocument = async (
   title: string,
   uploadedBy: string,
   file: File,
-  PACKAGE_ID: string,
   rpcUrl: string,
+  cap_id: string,
   walrusServiceId: string = WALRUS_SERVICES[0].id
 ): Promise<Document> => {
   // const [info, setInfo] = useState<Data | null>(null);
@@ -206,7 +206,6 @@ export const uploadDocument = async (
     return `${service?.publisherUrl}/v1/${cleanPath}`;
   }
 
-  console.log("PACKAGE_ID", PACKAGE_ID);
   const handleSubmit = () => {
     if (file) {
       const reader = new FileReader();
@@ -218,9 +217,6 @@ export const uploadDocument = async (
             const policyObjectBytes = fromHex(uploadedBy);
             const id = toHex(new Uint8Array([...policyObjectBytes, ...nonce]));
 
-            // console.log("Blob ID:", id);
-            // console.log("packageId:", PACKAGE_ID);
-            // console.log("data:", new Uint8Array(result));
             const { encryptedObject: encryptedBytes } =
               await sealClient.encrypt({
                 threshold: 2,

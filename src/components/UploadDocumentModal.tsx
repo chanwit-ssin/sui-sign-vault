@@ -11,91 +11,45 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Loader2, Upload } from "lucide-react";
-import { useWallet } from "@/context/WalletContext";
+// import { useWallet } from "@/context/WalletContext";
 import { uploadDocument } from "@/services/documentService";
 import { toast } from "@/lib/toast";
 import { useWallet as useSuiWallet } from "@suiet/wallet-kit";
 import { bcs } from "@mysten/bcs";
 import { Transaction } from "@mysten/sui/transactions";
 import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
-import { useSignAndExecuteTransaction, useSuiClient } from "@mysten/dapp-kit";
+import {
+  createAllowlist,
+  useSignAndExecuteService,
+} from "@/services/signAndExecuteService";
+import { PACKAGE_ID } from "@/config/constants";
 
 // Constants
-const PACKAGE_ID =
-  "0x9822769c16f703f6a43460dfa763252bac6bc216c39a630dbe95e36a5db4122e";
+
 const MODULE = "document";
 const rpcUrl = getFullnodeUrl("testnet");
 const client = new SuiClient({ url: rpcUrl });
+
 console.log("Sui Client initialized:", client);
 interface UploadDocumentModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
 }
-// const { mutate: signAndExecute } = useSignAndExecuteTransaction({
-//     execute: async ({ bytes, signature }) =>
-//       await client.executeTransactionBlock({
-//         transactionBlock: bytes,
-//         signature,
-//         options: {
-//           showRawEffects: true,
-//           showEffects: true,
-//         },
-//       }),
-//   });
 
 const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
 }) => {
+  // const { createAllowlist } = useSignAndExecuteService();
   const [title, setTitle] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const { account } = useWallet();
+  const { account } = useSuiWallet();
   const wallet = useSuiWallet();
 
   const [previewUrl, setPreviewUrl] = useState<string>("");
-
-  const createAllowlist = async (name: string) => {
-    if (name === "") {
-      alert("Please enter a name for the allowlist");
-      return;
-    }
-    const tx = new Transaction();
-    tx.moveCall({
-      target: `${PACKAGE_ID}::allowlist::create_allowlist_entry`,
-      arguments: [tx.pure.string(name)],
-    });
-    tx.setGasBudget(10000000);
-    const response = await signAndExecute(
-      {
-        transaction: tx,
-      },
-      {
-        onSuccess: async (result) => {
-          console.log("res", result);
-          // Extract the created allowlist object ID from the transaction result
-          const allowlistObject = result.effects?.created?.find(
-            (item) =>
-              item.owner &&
-              typeof item.owner === "object" &&
-              "Shared" in item.owner
-          );
-          const capObject = result.effects?.created?.find(
-            (item) =>
-              item.owner && typeof item.owner === "object" && "AddressOwner"
-          );
-
-          const createdObjectId = allowlistObject?.reference?.objectId;
-          console.log("createdObjectId", createdObjectId);
-          const capId = capObject?.reference?.objectId;
-          console.log("capId", capId);
-        },
-      }
-    );
-    console.log("response", response);
-  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null;
@@ -156,12 +110,16 @@ const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
     setIsUploading(true);
     try {
       // Step 1: Upload document to your service
+
+      const capId = await createAllowlist("test", wallet);
+
       const uploadResponse = await uploadDocument(
         title,
         account.address,
         file,
         PACKAGE_ID,
         rpcUrl
+        // capId
       );
       // Step 2: Register document on blockchain
       // In a real app, you'd generate these properly

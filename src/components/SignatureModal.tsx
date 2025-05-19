@@ -23,13 +23,11 @@ import { bcs } from "@mysten/bcs";
 import { Transaction } from "@mysten/sui/transactions";
 import { Ed25519Keypair, Ed25519PublicKey } from "@mysten/sui/keypairs/ed25519";
 import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
-
+import { PACKAGE_ID } from "@/config/constants";
 // use getFullnodeUrl to define Devnet RPC location
 const rpcUrl = getFullnodeUrl("testnet");
 const suiClient = new SuiClient({ url: rpcUrl });
 
-const PACKAGE_ID =
-  "0x9822769c16f703f6a43460dfa763252bac6bc216c39a630dbe95e36a5db4122e";
 const MODULE = "document";
 const NETWORK = "devnet";
 

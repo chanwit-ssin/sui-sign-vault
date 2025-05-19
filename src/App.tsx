@@ -3,13 +3,14 @@ import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { WalletProvider } from "@/context/WalletContext";
+// import { WalletProvider } from "@/context/WalletContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Header from "./components/Header";
 import Dashboard from "./pages/Dashboard";
 import Documents from "./pages/Documents";
 import DocumentView from "./pages/DocumentView";
+import { WalletProvider } from "@suiet/wallet-kit";
 
 const queryClient = new QueryClient();
 
