@@ -22,11 +22,10 @@ import {
   createAllowlist,
   useSignAndExecuteService,
 } from "@/services/signAndExecuteService";
-import { PACKAGE_ID } from "@/config/constants";
+import { SUIDOC_PACKAGE_ID, SUIDOC_MODULE } from "@/config/constants";
 
 // Constants
 
-const MODULE = "document";
 const rpcUrl = getFullnodeUrl("testnet");
 const client = new SuiClient({ url: rpcUrl });
 
@@ -70,23 +69,34 @@ const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
     };
   }, [previewUrl]);
 
-  const registerDocument = async (docHash: string, cid: string) => {
+  const registerDocument = async (allowlistId: string) => {
     if (!wallet.connected) throw new Error("Wallet not connected");
 
     const txb = new Transaction();
-    const docHashBytes = bcs.string().serialize(docHash);
-    const cidBytes = bcs.string().serialize(cid);
+    // const docIdBytes = bcs.string().serialize(doc_id);
 
     txb.moveCall({
-      target: `${PACKAGE_ID}::${MODULE}::register_document`,
-      arguments: [txb.pure(docHashBytes), txb.pure(cidBytes)],
+      target: `${SUIDOC_PACKAGE_ID}::${SUIDOC_MODULE}::register_document`,
+      arguments: [
+        txb.pure.string(allowlistId),
+      ],
     });
-
+  
     txb.setGasBudget(50_000_000); // 0.05 SUI
-
-    return wallet.signAndExecuteTransaction({
-      transaction: txb,
+  
+    const result = await wallet.signAndExecuteTransaction({
+      transaction: txb
     });
+  
+    return await client.waitForTransaction({ 
+      digest: result.digest,
+      options: {
+        showEvents: true,
+        showObjectChanges: true
+      }
+    });
+
+
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -111,22 +121,22 @@ const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
     try {
       // Step 1: Upload document to your service
 
-      const capId = await createAllowlist("test", wallet);
+      // const capId = await createAllowlist("test", wallet);
 
-      const uploadResponse = await uploadDocument(
-        title,
-        account.address,
-        file,
-        PACKAGE_ID,
-        rpcUrl
-        // capId
-      );
+      // const uploadResponse = await uploadDocument(
+      //   title,
+      //   account.address,
+      //   file,
+      //   PACKAGE_ID,
+      //   rpcUrl
+      //   // capId
+      // );
       // Step 2: Register document on blockchain
       // In a real app, you'd generate these properly
-      const docHash = "sample-hash-" + Math.random().toString(36).substring(2);
-      const cid = "ipfs-cid-" + Math.random().toString(36).substring(2);
-
-      const txResult = await registerDocument(docHash, cid);
+      // const docHash = "sample-hash-" + Math.random().toString(36).substring(2);
+      // const cid = "ipfs-cid-" + Math.random().toString(36).substring(2);
+      const allowlistId = "0x849faf967124f4baecfcafb66641be9f9d5aeb442ff68ff29f415e8a3fe95c85"
+      const txResult = await registerDocument(allowlistId);
 
       toast.success("Document uploaded and registered successfully");
       console.log("Transaction result:", txResult);

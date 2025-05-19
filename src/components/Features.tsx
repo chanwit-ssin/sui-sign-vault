@@ -48,7 +48,7 @@ const Features = () => {
                 <span className="text-sui-teal">Powered by Blockchain</span>
               </h1>
               <p className="text-lg text-gray-600">
-                SuiSign Vault lets you create, manage, and sign documents with
+                SuiDoc Vault lets you create, manage, and sign documents with
                 cryptographic proof on the Sui blockchain, providing immutable
                 records and enhanced security.
               </p>
@@ -95,7 +95,7 @@ const Features = () => {
         <div className="container px-4 mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              How SuiSign Works
+              How SuiDoc Works
             </h2>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
               Our blockchain-powered document signing platform provides
@@ -171,7 +171,7 @@ const Features = () => {
               Key Features
             </h2>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              SuiSign Vault provides everything you need for secure document
+              SuiDoc Vault provides everything you need for secure document
               management
             </p>
           </div>
@@ -256,7 +256,7 @@ const Features = () => {
               Frequently Asked Questions
             </h2>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Get answers to common questions about SuiSign Vault
+              Get answers to common questions about SuiDoc Vault
             </p>
           </div>
 
@@ -277,7 +277,7 @@ const Features = () => {
 
               <AccordionItem value="item-2">
                 <AccordionTrigger>
-                  Do I need a Sui wallet to use SuiSign?
+                  Do I need a Sui wallet to use SuiDoc?
                 </AccordionTrigger>
                 <AccordionContent>
                   Yes, you'll need a Sui-compatible wallet to sign documents on
@@ -300,9 +300,9 @@ const Features = () => {
               </AccordionItem>
 
               <AccordionItem value="item-4">
-                <AccordionTrigger>Is SuiSign legally binding?</AccordionTrigger>
+                <AccordionTrigger>Is SuiDoc legally binding?</AccordionTrigger>
                 <AccordionContent>
-                  SuiSign signatures include all the elements needed for legally
+                  SuiDoc signatures include all the elements needed for legally
                   binding electronic signatures in most jurisdictions, including
                   proof of identity, intent to sign, and record retention.
                   However, legal requirements vary by country and document type,
@@ -321,7 +321,7 @@ const Features = () => {
             Ready to get started with secure document signing?
           </h2>
           <p className="text-xl mb-8 max-w-2xl mx-auto opacity-90">
-            Join thousands of users who trust SuiSign Vault for their important
+            Join thousands of users who trust SuiDoc Vault for their important
             documents
           </p>
           {/* <Button

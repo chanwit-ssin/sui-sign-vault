@@ -22,12 +22,10 @@ import { bcs } from "@mysten/bcs";
 import { Transaction } from "@mysten/sui/transactions";
 import { Ed25519Keypair, Ed25519PublicKey } from "@mysten/sui/keypairs/ed25519";
 import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
-import { PACKAGE_ID } from "@/config/constants";
+import { SUIDOC_PACKAGE_ID, SUIDOC_MODULE } from "@/config/constants";
 // use getFullnodeUrl to define Devnet RPC location
 const rpcUrl = getFullnodeUrl("testnet");
 const suiClient = new SuiClient({ url: rpcUrl });
-
-const MODULE = "document";
 const NETWORK = "devnet";
 
 // Example SHA-256 hash (64 hex chars = 32 bytes)
@@ -67,14 +65,15 @@ const SignatureModal: React.FC<SignatureModalProps> = ({
       // convert result to hex string
       const hexString = result.signature.toString("hex");
 
+      const doc_id = "0x849faf967124f4baecfcafb66641be9f9d5aeb442ff68ff29f415e8a3fe95c85"
       const txb = new Transaction();
 
-      const docHashBytes: any = bcs.string().serialize(docHash);
+      // const docHashBytes: any = bcs.string().serialize(docHash);
       const signatureBytes: any = bcs.string().serialize(hexString);
 
       txb.moveCall({
-        target: `${PACKAGE_ID}::${MODULE}::sign_document`,
-        arguments: [txb.pure(docHashBytes), txb.pure(signatureBytes)],
+        target: `${SUIDOC_PACKAGE_ID}::${SUIDOC_MODULE}::sign_document`,
+        arguments: [txb.pure.string(doc_id), txb.pure(signatureBytes)],
       });
 
       txb.setGasBudget(50_000_000); // 0.05 SUI
@@ -82,10 +81,8 @@ const SignatureModal: React.FC<SignatureModalProps> = ({
       result = await wallet.signAndExecuteTransaction({
         transaction: txb,
       });
-
-      if (result) {
-        onConfirm(result.digest);
-      }
+      
+      console.log("Transaction result:", result);
     } catch (error) {
       console.error("Signing failed:", error);
       toast.error("Failed to sign document");

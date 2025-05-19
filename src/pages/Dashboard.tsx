@@ -20,6 +20,10 @@ import {
 import DocumentCard from "@/components/DocumentCard";
 import { useNavigate } from "react-router-dom";
 import UploadDocumentModal from "@/components/UploadDocumentModal";
+import { useWallet } from "@suiet/wallet-kit";
+import { getAllDocumentObjects } from "@/services/signAndExecuteService";
+import { getFullnodeUrl, SuiClient } from '@mysten/sui/client';
+import { NETWORK } from "@/config/constants";
 
 const Dashboard = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -27,8 +31,12 @@ const Dashboard = () => {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const { account } = useSuiWallet();
   const navigate = useNavigate();
+  const wallet = useWallet();
+  const client = new SuiClient({ url: getFullnodeUrl(NETWORK) });
 
   const loadDocuments = async () => {
+    const suidoc_ob = await getAllDocumentObjects(client)
+    console.log("suidoc_ob", suidoc_ob)
     setIsLoading(true);
     try {
       const docs = await getDocuments();

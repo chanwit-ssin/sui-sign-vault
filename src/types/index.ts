@@ -32,3 +32,20 @@ export interface UploadedDoc {
   blobId: string;
   uploadedAt: Date;
 }
+
+export interface SignatureRecord {
+  signerAddress: string;
+  signature: string;
+  timestamp: number;
+  transactionId: string;
+}
+
+// Update your Document interface if needed
+export interface Document {
+  id: string;
+  title: string;
+  status: "draft" | "pending" | "signed" | "completed";
+  uploadedBy: string;
+  sharedWith?: string[];
+  // Add other document properties
+}

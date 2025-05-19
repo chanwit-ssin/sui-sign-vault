@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import Header from "./components/Header";
 import Dashboard from "./pages/Dashboard";
 import Documents from "./pages/Documents";
+import VerifySig from "./pages/VerifySig";
 import DocumentView from "./pages/DocumentView";
 import { WalletProvider } from "@suiet/wallet-kit";
 
@@ -28,6 +29,7 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/documents" element={<Documents />} />
+                <Route path="/verify" element={<VerifySig />} />
                 <Route path="/documents/:id" element={<DocumentView />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
@@ -35,7 +37,7 @@ const App = () => (
             </main>
             <footer className="bg-white border-t border-gray-200 py-4">
               <div className="container mx-auto px-4 text-center text-sm text-gray-500">
-                © {new Date().getFullYear()} SuiSign Vault. Powered by Sui
+                © {new Date().getFullYear()} SuiDoc Vault. Powered by Sui
                 blockchain.
               </div>
             </footer>

@@ -45,7 +45,7 @@ const WalletConnectDialog: React.FC<WalletConnectDialogProps> = ({
 
         <div className="py-4">
           <p className="mb-4 text-center text-sm text-gray-600">
-            Please select a wallet to connect to SuiSign
+            Please select a wallet to connect to SuiDoc
           </p>
 
           {/* ปุ่ม ConnectButton จะโชว์รายชื่อ wallets ให้เลือกอัตโนมัติ */}
