@@ -53,7 +53,7 @@ const Features = () => {
                 records and enhanced security.
               </p>
               <div className="pt-4 flex flex-col sm:flex-row gap-4">
-                <ConnectButton className="bg-sui-navy hover:bg-sui-navy/90 ">
+                <ConnectButton className="bg-sui-navy hover:bg-sui-navy/90 inline-flex items-center px-4 py-3 rounded ">
                   <span>Connect Wallet</span>
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </ConnectButton>

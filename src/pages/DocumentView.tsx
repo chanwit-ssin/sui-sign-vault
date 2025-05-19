@@ -26,7 +26,7 @@ const DocumentView = () => {
   const [mode, setMode] = useState<"view" | "edit">("view");
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const navigate = useNavigate();
-  const { isConnected, account } = useSuiWallet();
+  const { account, connected } = useSuiWallet();
 
   const loadDocument = async () => {
     if (!id) return;
@@ -127,7 +127,7 @@ const DocumentView = () => {
               <div className="flex items-center space-x-4">
                 {getStatusIndicator()}
 
-                {isConnected && (
+                {account && (
                   <div className="flex items-center space-x-2">
                     {canShare() && (
                       <Button
@@ -170,18 +170,17 @@ const DocumentView = () => {
               </div>
             </div>
 
-            {!isConnected && (
+            {!account && (
               <div className="bg-blue-50 border border-blue-200 p-4 rounded-md mb-6">
                 <p className="text-blue-700">
                   Connect your wallet to sign this document
                 </p>
               </div>
             )}
-
             <DocumentViewer
               document={document}
               onDocumentUpdate={loadDocument}
-              editMode={mode === "edit" && isConnected}
+              editMode={mode === "edit" && connected}
             />
 
             <ShareModal
