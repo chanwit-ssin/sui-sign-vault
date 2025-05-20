@@ -6,6 +6,8 @@ import { componentTagger } from "lovable-tagger";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
+    host: "::",
+    port: 443,
     proxy: {
       "/aggregator1/v1": {
         target: "https://aggregator.walrus-testnet.walrus.space",
