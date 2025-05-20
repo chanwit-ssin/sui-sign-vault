@@ -7,7 +7,7 @@ import { componentTagger } from "lovable-tagger";
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
-    port: 443,
+    port: 8080,
     proxy: {
       "/aggregator1/v1": {
         target: "https://aggregator.walrus-testnet.walrus.space",
