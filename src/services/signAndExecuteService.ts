@@ -6,7 +6,7 @@ import { SUIDOC_MODULE, SUIDOC_PACKAGE_ID, PACKAGE_ID } from "@/config/constants
 export async function createAllowlist(
   name: string,
   wallet: any
-): Promise<string> {
+): Promise<any> {
   const rpcUrl = getFullnodeUrl("testnet");
   const client = new SuiClient({ url: rpcUrl });
 
@@ -28,15 +28,46 @@ export async function createAllowlist(
       showEffects: true,
     },
   });
-  // const allowlistObj = result.effects?.created?.find(
-  //   (o) => o.owner && typeof o.owner === "object" && "Shared" in o.owner
-  // );
-  // const capObj = result.effects?.created?.find(
-  //   (o) => o.owner && typeof o.owner === "object" && "AddressOwner" in o.owner
-  // );
-  // const capId = capObj?.reference.objectId;
-  // if (!capId) throw new Error("Failed to find Cap ID");
-  return "";
+  
+  const waitResult = await client.waitForTransaction({
+    digest: result.digest,
+    options: {
+      showEvents: true,
+      showObjectChanges: true,
+    },
+  });
+  
+  console.log("Wait result:", waitResult);
+  
+  // Find objects using objectChanges instead of effects
+  const allowlistObj = waitResult.objectChanges?.find(
+    (change) => 
+      change.type === "created" && 
+      change.owner && 
+      typeof change.owner === "object" && 
+      "Shared" in change.owner
+  );
+  
+  const capObj = waitResult.objectChanges?.find(
+    (change) => 
+      change.type === "created" && 
+      change.owner && 
+      typeof change.owner === "object" && 
+      "AddressOwner" in change.owner
+  );
+  
+  console.log("Allowlist object:", allowlistObj);
+  console.log("Cap object:", capObj);
+  
+  if (!allowlistObj) throw new Error("Failed to find allowlist object");
+  if (!capObj) throw new Error("Failed to find Cap ID object");
+  
+  // Access objectId directly from the objectChange
+  const allowlistObjectId = allowlistObj.objectId;
+  const capId = capObj.objectId;
+  
+  if (!capId) throw new Error("Failed to find Cap ID");
+  return { allowlistObjectId, capId };
 }
 
 export async function getAllDocumentObjects(clent: any): Promise<any[]> {
