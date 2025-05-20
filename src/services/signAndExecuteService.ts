@@ -68,6 +68,7 @@ export async function createAllowlist(name: string, wallet: any): Promise<any> {
   const capId = capObj.objectId;
   console.log("allowlistObjectId:", allowlistObjectId);
   console.log("capId:", capId);
+
   if (!capId) throw new Error("Failed to find Cap ID");
 
   //add user to allowlist
