@@ -65,7 +65,7 @@ const SignatureModal: React.FC<SignatureModalProps> = ({
       // convert result to hex string
       const hexString = result.signature.toString("hex");
 
-      const doc_id = "0x849faf967124f4baecfcafb66641be9f9d5aeb442ff68ff29f415e8a3fe95c85"
+      const doc_id = "0x42d55a185df072ab1be9cf77fa50ad5d4e43af44e25d6d197ef0f181f0371a99"
       const txb = new Transaction();
 
       // const docHashBytes: any = bcs.string().serialize(docHash);

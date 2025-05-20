@@ -53,7 +53,7 @@ const DocumentView = () => {
 
     setIsLoadingHistory(true);
     try {
-      const history = await getDocumentSignatureHistory(id);
+      const history = await getDocumentSignatureHistory("0x42d55a185df072ab1be9cf77fa50ad5d4e43af44e25d6d197ef0f181f0371a99");
       setSignatureHistory(history);
     } catch (error) {
       console.error("Error fetching signature history:", error);

@@ -31,7 +31,7 @@ export async function createAllowlist(
       showEffects: true,
     },
   });
-  
+
   const waitResult = await client.waitForTransaction({
     digest: result.digest,
     options: {
@@ -39,36 +39,36 @@ export async function createAllowlist(
       showObjectChanges: true,
     },
   });
-  
+
   console.log("Wait result:", waitResult);
-  
+
   // Find objects using objectChanges instead of effects
   const allowlistObj = waitResult.objectChanges?.find(
-    (change) => 
-      change.type === "created" && 
-      change.owner && 
-      typeof change.owner === "object" && 
+    (change) =>
+      change.type === "created" &&
+      change.owner &&
+      typeof change.owner === "object" &&
       "Shared" in change.owner
   );
-  
+
   const capObj = waitResult.objectChanges?.find(
-    (change) => 
-      change.type === "created" && 
-      change.owner && 
-      typeof change.owner === "object" && 
+    (change) =>
+      change.type === "created" &&
+      change.owner &&
+      typeof change.owner === "object" &&
       "AddressOwner" in change.owner
   );
-  
+
   console.log("Allowlist object:", allowlistObj);
   console.log("Cap object:", capObj);
-  
+
   if (!allowlistObj) throw new Error("Failed to find allowlist object");
   if (!capObj) throw new Error("Failed to find Cap ID object");
-  
+
   // Access objectId directly from the objectChange
   const allowlistObjectId = allowlistObj.objectId;
   const capId = capObj.objectId;
-  
+
   if (!capId) throw new Error("Failed to find Cap ID");
   return { allowlistObjectId, capId };
 }

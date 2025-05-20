@@ -1,14 +1,16 @@
 import { Document, SignatureField, UploadedDoc } from "@/types";
 import { fromHex, toHex } from "@mysten/sui/utils";
-import { SuiClient } from "@mysten/sui/client";
+import { getFullnodeUrl, SuiClient } from '@mysten/sui/client';
 import { SealClient, getAllowlistedKeyServers } from "@mysten/seal";
-import { PACKAGE_ID, WALRUS_SERVICES } from "@/config/constants";
+import { PACKAGE_ID, WALRUS_SERVICES, SUIDOC_PACKAGE_ID, SUIDOC_MODULE, NETWORK } from "@/config/constants";
 import { useSignAndExecuteTransaction, useSuiClient } from "@mysten/dapp-kit";
 import { useNetworkVariable } from "@/config/networkConfig";
 import { useState } from "react";
 import { Transaction } from "@mysten/sui/transactions";
+
 import { SignatureRecord } from "@/types/index";
 // Mock documents for demonstration
+const client = new SuiClient({ url: getFullnodeUrl(NETWORK) });
 
 const mockDocuments: Document[] = [
   {
@@ -39,8 +41,6 @@ const mockDocuments: Document[] = [
   },
 ];
 
-// Add this function to your documentService.ts file
-
 /**
  * Fetches the signature history for a document
  * 
@@ -50,26 +50,66 @@ const mockDocuments: Document[] = [
 export const getDocumentSignatureHistory = async (documentId: string): Promise<SignatureRecord[]> => {
   try {
     // In a real implementation, you would fetch this data from your backend or blockchain
-    // Example:
-    // const response = await fetch(`${API_URL}/documents/${documentId}/signatures`);
-    // const data = await response.json();
-    // return data;
-    
     // For now, return mock data for demonstration
-    return [
-      {
-        signerAddress: "0x4543...4be8",
-        signature: "0x7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b",
-        timestamp: Date.now() - 86400000, // 1 day ago
-        transactionId: "0x123456789abcdef123456789abcdef123456789abcdef123456789abcdef1234"
+    // Example:
+    // return [
+    //   {
+    //     signerAddress: "0x4543...4be8",
+    //     signature: "0x7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b",
+    //     timestamp: Date.now() - 86400000, // 1 day ago
+    //     transactionId: "0x123456789abcdef123456789abcdef123456789abcdef123456789abcdef1234"
+    //   },
+    //   {
+    //     signerAddress: "0x9876...5432",
+    //     signature: "0x1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b",
+    //     timestamp: Date.now() - 172800000, // 2 days ago
+    //     transactionId: "0xabcdef123456789abcdef123456789abcdef123456789abcdef123456789abcde"
+    //   }
+    // ];
+
+    const eventFilter = {
+      MoveModule: {
+        package: SUIDOC_PACKAGE_ID,
+        module: SUIDOC_MODULE,
       },
-      {
-        signerAddress: "0x9876...5432",
-        signature: "0x1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b",
-        timestamp: Date.now() - 172800000, // 2 days ago
-        transactionId: "0xabcdef123456789abcdef123456789abcdef123456789abcdef123456789abcde"
-      }
-    ];
+    };
+    try {
+      const events = await client.queryEvents({
+        query: eventFilter,
+        limit: 100,
+        order: 'descending',
+      });
+  
+      return events.data
+      .filter(event => {
+        const eventData = event.parsedJson as any;
+        return (
+          JSON.stringify(eventData.doc_id) === JSON.stringify(documentId) &&
+          event.type.endsWith("DocumentSignedEvent")
+        );
+      })
+      .map(event => {
+        const eventData = event.parsedJson as any;
+        
+        // Convert the signature array to a hex string (if needed)
+        const signatureBytes = new Uint8Array(eventData.signature);
+        const signatureHex = Array.from(signatureBytes)
+          .map(byte => byte.toString(16).padStart(2, '0'))
+          .join('');
+        
+        return {
+          signerAddress: eventData.signer,
+          signature: `0x${signatureHex}`, // or use eventData.signature directly if it's already formatted
+          timestamp: Number(event.timestampMs), // Convert string timestamp to number
+          transactionId: event.id.txDigest
+        };
+      });
+  
+    } catch (error) {
+      console.error("Error fetching signature history:", error);
+      throw error;
+    }
+
   } catch (error) {
     console.error("Error fetching signature history:", error);
     throw error;
