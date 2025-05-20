@@ -46,6 +46,24 @@ const mockDocuments: Document[] = [
     signatureFields: [],
     sharedWith: [],
   },
+  {
+    id: "0x1de23f8645acf310d859fd7c7163544c9d48a6ea19f67777c80d66efa41df44a",
+    title: "NDA Agreement",
+    uploadedBy: "0xuser1",
+    uploadedAt: new Date("2025-03-30"),
+    status: "draft",
+    signatureFields: [],
+    sharedWith: [],
+  },
+  {
+    id: "0x2c0698cb2f3b3fa131defa1bfe9077c13c61f3c24d75f93d4a7659ce34e82678",
+    title: "NDA Agreement",
+    uploadedBy: "0xuser1",
+    uploadedAt: new Date("2025-03-30"),
+    status: "draft",
+    signatureFields: [],
+    sharedWith: [],
+  },
 ];
 
 
@@ -122,7 +140,7 @@ export const getDocumentSignatureHistory = async (
     //     transactionId: "0xabcdef123456789abcdef123456789abcdef123456789abcdef123456789abcde"
     //   }
     // ];
-
+    console.log("documentId:", documentId);
     const eventFilter = {
       MoveModule: {
         package: SUIDOC_PACKAGE_ID,
@@ -260,7 +278,6 @@ export type Data = {
   suiUrl: string;
   isImage: string;
 };
-
 export const uploadDocument = async (
   title: string,
   uploadedBy: string,
@@ -272,15 +289,12 @@ export const uploadDocument = async (
   client: any,
   walrusServiceId: string = WALRUS_SERVICES[0].id
 ): Promise<Document> => {
-  // const [info, setInfo] = useState<Data | null>(null);
-  // console.log("cap_id at docser", cap_id);
-  // console.log("allowlistId at docser", allowlistId);
+  // Constants
   const SUI_VIEW_TX_URL = `https://suiscan.xyz/testnet/tx`;
   const SUI_VIEW_OBJECT_URL = `https://suiscan.xyz/testnet/object`;
-  let info: Data | null = null;
-
   const NUM_EPOCH = 1;
-  // const packageId = useNetworkVariable("packageId");
+
+  // Initialize clients
   const suiClient = new SuiClient({ url: rpcUrl });
   const sealClient = new SealClient({
     suiClient,
@@ -288,212 +302,180 @@ export const uploadDocument = async (
     verifyKeyServers: false,
   });
 
-  // 1) อ่านไฟล์เป็น Uint8Array
-  const buffer = await file.arrayBuffer();
-  const data = new Uint8Array(buffer);
+  // Helper functions
+  const getServiceUrl = (type: 'aggregator' | 'publisher', path: string): string => {
+    const service = WALRUS_SERVICES.find((s) => s.id === walrusServiceId);
+    if (!service) throw new Error(`Service ${walrusServiceId} not found`);
+    
+    const cleanPath = path.replace(/^\/+/, "").replace(/^v1\//, "");
+    const baseUrl = type === 'aggregator' ? service.aggregatorUrl : service.publisherUrl;
+    return `${baseUrl}/v1/${cleanPath}`;
+  };
 
-  const previewDataUrl = await new Promise<string>((res, rej) => {
-    const reader = new FileReader();
-    reader.onload = () => res(reader.result as string);
-    reader.onerror = () => rej(reader.error);
-    reader.readAsDataURL(file);
-  });
-
-  if (file.type === "application/pdf") {
-    // PDF มักจะเริ่มด้วย "%PDF-"
-    const header = new TextDecoder().decode(data.slice(0, 5));
-    console.log("PDF header:", header);
-  }
-
-  if (file.name.endsWith(".docx")) {
-    const magic = Array.from(data.slice(0, 4))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join(" ");
-    console.log("DOCX magic bytes:", magic);
-  }
-
-  if (file.type.startsWith("image/")) {
-    const dataUrl = await new Promise<string>((res, rej) => {
+  const readFileAsDataUrl = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = () => res(reader.result as string);
-      reader.onerror = () => rej(reader.error);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
       reader.readAsDataURL(file);
     });
-    // console.log("Image preview Data URL:", dataUrl.slice(0, 100));
-    // แค่ส่วนต้นๆ
-  }
+  };
 
-  // // 2) สร้าง blob ID (policyId + nonce)
-  // const policyBytes = fromHex(WALRUS_PACKAGE_ID);
-  // const nonce = crypto.getRandomValues(new Uint8Array(5));
-  // const idHex = toHex(new Uint8Array([...policyBytes, ...nonce]));
-
-  // 4) อัปโหลด ciphertext ไปยัง Walrus
-  function getAggregatorUrl(path: string): string {
-    const service = WALRUS_SERVICES.find((s) => s.id === walrusServiceId);
-    const cleanPath = path.replace(/^\/+/, "").replace(/^v1\//, "");
-    return `${service?.aggregatorUrl}/v1/${cleanPath}`;
-  }
-
-  function getPublisherUrl(path: string): string {
-    const service = WALRUS_SERVICES.find((s) => s.id === walrusServiceId);
-    const cleanPath = path.replace(/^\/+/, "").replace(/^v1\//, "");
-    // console.log("getPublisherUrl", `${service?.publisherUrl}/v1/${cleanPath}`);
-    return `${service?.publisherUrl}/v1/${cleanPath}`;
-  }
-
-  const handleSubmit = () => {
-    if (file) {
+  const readFileAsArrayBuffer = (file: File): Promise<ArrayBuffer> => {
+    return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = async function (event) {
-        if (event.target && event.target.result) {
-          const result = event.target.result;
-          if (result instanceof ArrayBuffer) {
-            const nonce = crypto.getRandomValues(new Uint8Array(5));
-            const policyObjectBytes = fromHex(allowlistId);
-            const id = toHex(new Uint8Array([...policyObjectBytes, ...nonce]));
-
-            const { encryptedObject: encryptedBytes } =
-              await sealClient.encrypt({
-                threshold: 2,
-                packageId: WALRUS_PACKAGE_ID,
-                id,
-                data: new Uint8Array(result),
-              });
-            const storageInfo = await storeBlob(encryptedBytes);
-            const data = await displayUpload(storageInfo.info, file.type);
-            console.log("Storage info 2:", data);
-            console.log(
-              "///////////////////////////////////////////////////////////////"
-            );
-            console.log("Blob ID:", data.blobId);
-            console.log("allowlistId:", allowlistId);
-            console.log("cap_id:", cap_id);
-
-            const sleep = (ms: number) =>
-              new Promise((resolve) => setTimeout(resolve, ms));
-            console.log("start Sleep");
-            await sleep(40000);
-            console.log("Sleep done");
-            const txp = new Transaction();
-
-            // Sleep helper
-
-            txp.moveCall({
-              target: `${WALRUS_PACKAGE_ID}::allowlist::publish`,
-              arguments: [
-                txp.object(allowlistId),
-                txp.object(cap_id),
-                txp.pure.string(data.blobId),
-              ],
-            });
-            txp.setGasBudget(10000000);
-
-            const resultPublish = await wallet.signAndExecuteTransaction({
-              transaction: txp,
-            });
-
-            const waitResultPublish = await client.waitForTransaction({
-              digest: resultPublish.digest,
-              options: {
-                showEvents: true,
-                showObjectChanges: true,
-              },
-            });
-          } else {
-            console.error("Unexpected result type:", typeof result);
-            // setIsUploading(false);
-          }
-        }
-      };
+      reader.onload = () => resolve(reader.result as ArrayBuffer);
+      reader.onerror = () => reject(reader.error);
       reader.readAsArrayBuffer(file);
-    } else {
-      console.error("No file selected");
+    });
+  };
+
+  const validateFileType = async (file: File, data: Uint8Array) => {
+    if (file.type === "application/pdf") {
+      const header = new TextDecoder().decode(data.slice(0, 5));
+      console.log("PDF header:", header);
+    }
+
+    if (file.name.endsWith(".docx")) {
+      const magic = Array.from(data.slice(0, 4))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join(" ");
+      console.log("DOCX magic bytes:", magic);
+    }
+
+    if (file.type.startsWith("image/")) {
+      const dataUrl = await readFileAsDataUrl(file);
+      console.log("Image preview Data URL:", dataUrl.slice(0, 100));
     }
   };
-  handleSubmit();
 
-  const displayUpload = async (storage_info: any, media_type: any) => {
-    if ("alreadyCertified" in storage_info) {
+  const storeBlob = async (encryptedData: Uint8Array): Promise<{ info: any }> => {
+    const response = await fetch(getServiceUrl('publisher', `/v1/blobs?epochs=${NUM_EPOCH}`), {
+      method: "PUT",
+      body: encryptedData,
+    });
+
+    if (response.status !== 200) {
+      throw new Error("Error publishing the blob on Walrus, please select a different Walrus service.");
+    }
+
+    return response.json().then((info) => ({ info }));
+  };
+
+  const displayUpload = async (storageInfo: any, mediaType: string): Promise<Data> => {
+    let info: Data;
+
+    if ("alreadyCertified" in storageInfo) {
       info = {
         status: "Already certified",
-        blobId: storage_info.alreadyCertified.blobId,
-        endEpoch: storage_info.alreadyCertified.endEpoch,
+        blobId: storageInfo.alreadyCertified.blobId,
+        endEpoch: storageInfo.alreadyCertified.endEpoch,
         suiRefType: "Previous Sui Certified Event",
-        suiRef: storage_info.alreadyCertified.event.txDigest,
+        suiRef: storageInfo.alreadyCertified.event.txDigest,
         suiBaseUrl: SUI_VIEW_TX_URL,
-        blobUrl: getAggregatorUrl(
-          `/v1/blobs/${storage_info.alreadyCertified.blobId}`
-        ),
-        suiUrl: `${SUI_VIEW_OBJECT_URL}/${storage_info.alreadyCertified.event.txDigest}`,
-        isImage: media_type.startsWith("image"),
+        blobUrl: getServiceUrl('aggregator', `/v1/blobs/${storageInfo.alreadyCertified.blobId}`),
+        suiUrl: `${SUI_VIEW_OBJECT_URL}/${storageInfo.alreadyCertified.event.txDigest}`,
+        isImage: mediaType.startsWith("image"),
       };
-    } else if ("newlyCreated" in storage_info) {
+    } else if ("newlyCreated" in storageInfo) {
       info = {
         status: "Newly created",
-        blobId: storage_info.newlyCreated.blobObject.blobId,
-        endEpoch: storage_info.newlyCreated.blobObject.storage.endEpoch,
+        blobId: storageInfo.newlyCreated.blobObject.blobId,
+        endEpoch: storageInfo.newlyCreated.blobObject.storage.endEpoch,
         suiRefType: "Associated Sui Object",
-        suiRef: storage_info.newlyCreated.blobObject.id,
+        suiRef: storageInfo.newlyCreated.blobObject.id,
         suiBaseUrl: SUI_VIEW_OBJECT_URL,
-        blobUrl: getAggregatorUrl(
-          `/v1/blobs/${storage_info.newlyCreated.blobObject.blobId}`
-        ),
-        suiUrl: `${SUI_VIEW_OBJECT_URL}/${storage_info.newlyCreated.blobObject.id}`,
-        isImage: media_type.startsWith("image"),
+        blobUrl: getServiceUrl('aggregator', `/v1/blobs/${storageInfo.newlyCreated.blobObject.blobId}`),
+        suiUrl: `${SUI_VIEW_OBJECT_URL}/${storageInfo.newlyCreated.blobObject.id}`,
+        isImage: mediaType.startsWith("image"),
       };
     } else {
-      throw Error("Unhandled successful response!");
+      throw new Error("Unhandled successful response!");
     }
-    console.log("Storage info 1:", info);
+
+    console.log("Storage info:", info);
     return info;
   };
 
-  const storeBlob = (encryptedData: Uint8Array) => {
-    return fetch(`${getPublisherUrl(`/v1/blobs?epochs=${NUM_EPOCH}`)}`, {
-      method: "PUT",
-      body: encryptedData,
-    }).then((response) => {
-      if (response.status === 200) {
-        return response.json().then((info) => {
-          return { info };
-        });
-      } else {
-        alert(
-          "Error publishing the blob on Walrus, please select a different Walrus service."
-        );
-        // setIsUploading(false);
-        throw new Error("Something went wrong when storing the blob!");
-      }
+  const encryptAndStoreFile = async (file: File): Promise<Data> => {
+    const arrayBuffer = await readFileAsArrayBuffer(file);
+    const nonce = crypto.getRandomValues(new Uint8Array(5));
+    const policyObjectBytes = fromHex(allowlistId);
+    const id = toHex(new Uint8Array([...policyObjectBytes, ...nonce]));
+
+    const { encryptedObject: encryptedBytes } = await sealClient.encrypt({
+      threshold: 2,
+      packageId: WALRUS_PACKAGE_ID,
+      id,
+      data: new Uint8Array(arrayBuffer),
+    });
+
+    const storageInfo = await storeBlob(encryptedBytes);
+    return displayUpload(storageInfo.info, file.type);
+  };
+
+  const publishToBlockchain = async (blobId: string) => {
+    const txp = new Transaction();
+    txp.moveCall({
+      target: `${WALRUS_PACKAGE_ID}::allowlist::publish`,
+      arguments: [
+        txp.object(allowlistId),
+        txp.object(cap_id),
+        txp.pure.string(blobId),
+      ],
+    });
+    txp.setGasBudget(10000000);
+
+    const resultPublish = await wallet.signAndExecuteTransaction({
+      transaction: txp,
+    });
+
+    return client.waitForTransaction({
+      digest: resultPublish.digest,
+      options: {
+        showEvents: true,
+        showObjectChanges: true,
+      },
     });
   };
 
-  // async function handlePublish(
-  //   wl_id: string,
-  //   cap_id: string,
-  //   moduleName: string
-  // ) {
+  // Main execution
+  try {
+    // Read and validate file
+    const buffer = await file.arrayBuffer();
+    const data = new Uint8Array(buffer);
+    await validateFileType(file, data);
 
-  //   console.log("Wait result add:", waitResultPublish);
-  // }
+    // Process file
+    const info = await encryptAndStoreFile(file);
+    console.log("Blob ID:", info.blobId);
+    console.log("allowlistId:", allowlistId);
+    console.log("cap_id:", cap_id);
 
-  // 5) สร้าง Document record พร้อม walrus blobId
-  const newDoc: Document & { walrusBlobId?: string } = {
-    id: `doc-${Date.now()}`,
-    title,
-    uploadedBy,
-    uploadedAt: new Date(),
-    status: "draft",
-    signatureFields: [],
-    sharedWith: [],
-    walrusBlobId: info?.blobId,
-  };
+    // Publish to blockchain
+    await publishToBlockchain(info.blobId);
 
-  // 6) บันทึกลง mock (หรือส่งไป backend จริง)
-  mockDocuments.push(newDoc);
-  console.log("New document:", newDoc);
-  return newDoc;
+    // Create and return document
+    const newDoc: Document & { walrusBlobId?: string } = {
+      id: `doc-${Date.now()}`,
+      title,
+      uploadedBy,
+      uploadedAt: new Date(),
+      status: "draft",
+      signatureFields: [],
+      sharedWith: [],
+      walrusBlobId: info.blobId,
+    };
+
+    mockDocuments.push(newDoc);
+    console.log("New document:", newDoc);
+    return newDoc;
+  } catch (error) {
+    console.error("Error uploading document:", error);
+    throw error;
+  }
 };
+
 
 export const shareDocument = async (
   documentId: string,

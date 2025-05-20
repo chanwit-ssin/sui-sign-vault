@@ -37,6 +37,7 @@ const signature =
   "deadbeef12345678deadbeef12345678deadbeef12345678deadbeef12345678";
 
 interface SignatureModalProps {
+  doc_id: string;
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (transactionId: string) => void;
@@ -44,6 +45,7 @@ interface SignatureModalProps {
 }
 
 const SignatureModal: React.FC<SignatureModalProps> = ({
+  doc_id,
   isOpen,
   onClose,
   onConfirm,
@@ -59,13 +61,14 @@ const SignatureModal: React.FC<SignatureModalProps> = ({
     setIsSigning(true);
     try {
       const msgBytes = new TextEncoder().encode(docHash);
+
       let result = await wallet.signPersonalMessage({
         message: msgBytes,
       });
       // convert result to hex string
       const hexString = result.signature.toString("hex");
 
-      const doc_id = "0x42d55a185df072ab1be9cf77fa50ad5d4e43af44e25d6d197ef0f181f0371a99"
+      // const doc_id = "0x1de23f8645acf310d859fd7c7163544c9d48a6ea19f67777c80d66efa41df44a"
       const txb = new Transaction();
 
       // const docHashBytes: any = bcs.string().serialize(docHash);
@@ -83,6 +86,7 @@ const SignatureModal: React.FC<SignatureModalProps> = ({
       });
       
       console.log("Transaction result:", result);
+      onClose()
     } catch (error) {
       console.error("Signing failed:", error);
       toast.error("Failed to sign document");

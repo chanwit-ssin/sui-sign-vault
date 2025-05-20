@@ -66,8 +66,8 @@ export async function createAllowlist(name: string, wallet: any): Promise<any> {
   // Access objectId directly from the objectChange
   const allowlistObjectId = allowlistObj.objectId;
   const capId = capObj.objectId;
-  console.log("allowlistObjectId:", allowlistObjectId);
-  console.log("capId:", capId);
+  console.log("--allowlistObjectId:", allowlistObjectId);
+  console.log("--capId:", capId);
 
   if (!capId) throw new Error("Failed to find Cap ID");
 
@@ -100,5 +100,6 @@ export async function createAllowlist(name: string, wallet: any): Promise<any> {
   });
   console.log("Wait result add:", waitResultAdd);
 
+  // fix allowlistObjectId
   return { allowlistObjectId, capId };
 }

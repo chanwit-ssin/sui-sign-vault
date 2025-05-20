@@ -16,6 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { NETWORK } from "@/config/constants";
+import { sign } from "crypto";
 
 const DocumentView = () => {
   const { id } = useParams<{ id: string }>();
@@ -28,6 +29,7 @@ const DocumentView = () => {
   const navigate = useNavigate();
   const { account, connected } = useSuiWallet();
 
+
   const loadDocument = async () => {
     if (!id) return;
 
@@ -39,7 +41,6 @@ const DocumentView = () => {
         // Load signature history after document is loaded
         loadSignatureHistory();
       } else {
-        navigate("/documents", { replace: true });
       }
     } catch (error) {
       console.error("Error fetching document:", error);
@@ -51,10 +52,26 @@ const DocumentView = () => {
   const loadSignatureHistory = async () => {
     if (!id) return;
 
-    setIsLoadingHistory(true);
+
     try {
-      const history = await getDocumentSignatureHistory("0x42d55a185df072ab1be9cf77fa50ad5d4e43af44e25d6d197ef0f181f0371a99");
-      setSignatureHistory(history);
+      const signature_fetch = await getDocumentSignatureHistory(id);
+      // check the new signature history with signatureHistory to set the new signature history
+      // const history = signature_fetch.filter((record) => {
+      //   return !signatureHistory.some((existingRecord) => existingRecord.transactionId === record.transactionId);
+      // });
+      // setSignatureHistory(history);
+      console.log("signatureHistory", signatureHistory);
+      console.log("ssssss",
+        signature_fetch.filter((record) => {
+          return !signatureHistory.some((existingRecord) => existingRecord.transactionId !== record.transactionId)
+        }))
+      // check if signature_fetch i)s new for signatureHistory
+      if (signature_fetch.filter((record) => {
+        return signatureHistory.some((existingRecord) => existingRecord.transactionId !== record.transactionId);
+      })) {
+        setIsLoadingHistory(true);
+        setSignatureHistory(signature_fetch);
+      }
     } catch (error) {
       console.error("Error fetching signature history:", error);
     } finally {
@@ -64,6 +81,10 @@ const DocumentView = () => {
 
   useEffect(() => {
     loadDocument();
+    // Set up interval
+    const intervalId = setInterval(loadSignatureHistory, 3000);
+
+    return () => clearInterval(intervalId);
   }, [id]);
 
   const getStatusIndicator = () => {
@@ -206,18 +227,19 @@ const DocumentView = () => {
               </p>
             </div>
           )}
-          
+
           {/* Two-column layout for document and signature history */}
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Document viewer column - takes 2/3 of the space on large screens */}
             <div className="lg:w-2/3">
               <DocumentViewer
+                doc_id={id}
                 document={document}
                 onDocumentUpdate={loadDocument}
                 editMode={mode === "edit" && connected}
               />
             </div>
-            
+
             {/* Signature history column - takes 1/3 of the space on large screens */}
             <div className="lg:w-1/3">
               <Card className="sticky top-6">
@@ -246,7 +268,7 @@ const DocumentView = () => {
                               <span>{new Date(record.timestamp).toLocaleString()}</span>
                             </div>
                           </div>
-                          
+
                           <div className="flex items-center mb-2">
                             <span className="font-mono text-sm">{formatAddress(record.signerAddress)}</span>
                             <Button
@@ -258,7 +280,7 @@ const DocumentView = () => {
                               <Copy className="h-3 w-3 text-gray-400" />
                             </Button>
                           </div>
-                          
+
                           <div className="mb-2">
                             <div className="text-xs text-gray-500 mb-1">Transaction ID:</div>
                             <div className="flex items-center">
@@ -283,13 +305,13 @@ const DocumentView = () => {
                               </Button>
                             </div>
                           </div>
-                          
+
                           <div>
                             <div className="text-xs text-gray-500 mb-1">Signature:</div>
                             <div className="flex items-center">
                               <div className="font-mono text-xs bg-gray-50 p-2 rounded overflow-x-auto max-w-full">
-                                {record.signature.length > 20 
-                                  ? `${record.signature.substring(0, 20)}...` 
+                                {record.signature.length > 20
+                                  ? `${record.signature.substring(0, 20)}...`
                                   : record.signature}
                               </div>
                               <Button

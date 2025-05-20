@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Document, SignatureField } from "@/types";
-import { useWallet as useSuiWallet } from "@suiet/wallet-kit";
 import { FileSignature, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SignatureModal from "./SignatureModal";
@@ -8,14 +7,44 @@ import { signDocument } from "@/services/documentService";
 import { toast } from "@/lib/toast";
 import { format } from "date-fns";
 import { nanoid } from "nanoid";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useWallet as useSuiWallet } from "@suiet/wallet-kit";
+import { useSuiClient } from "@mysten/dapp-kit";
 
+import { getAllowlistedKeyServers, SealClient, SessionKey } from '@mysten/seal';
+import { downloadAndDecrypt, getObjectExplorerLink, MoveCallConstructor } from '@/lib/utils';
+import { WALRUS_PACKAGE_ID, NETWORK } from "@/config/constants";
+import { set } from "date-fns";
+import { fromHex } from '@mysten/sui/utils';
+import { getFullnodeUrl, SuiClient } from '@mysten/sui/client';
+
+const x = new SuiClient({ url: getFullnodeUrl(NETWORK) });
+
+const TTL_MIN = 10;
+
+export interface FeedData {
+  allowlistId: string;
+  allowlistName: string;
+  blobIds: string[];
+}
+
+function constructMoveCall(packageId: string, allowlistId: string): MoveCallConstructor {
+  return (tx: Transaction, id: string) => {
+    tx.moveCall({
+      target: `${packageId}::allowlist::seal_approve`,
+      arguments: [tx.pure.vector('u8', fromHex(id)), tx.object(allowlistId)],
+    });
+  };
+}
 interface DocumentViewerProps {
+  doc_id: string;
   document: Document;
   onDocumentUpdate: () => void;
   editMode: boolean;
 }
 
 const DocumentViewer: React.FC<DocumentViewerProps> = ({
+  doc_id,
   document,
   onDocumentUpdate,
   editMode,
@@ -28,6 +57,130 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
   const [pendingField, setPendingField] =
     useState<Partial<SignatureField> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const wallet = useSuiWallet();
+
+  const [feed, setFeed] = useState<FeedData>();
+  const [decryptedFileUrls, setDecryptedFileUrls] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [currentSessionKey, setCurrentSessionKey] = useState<SessionKey | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  // const suiClient = useSuiClient();
+  const suiClient = useSuiClient();
+  const client = new SealClient({
+    suiClient,
+    serverObjectIds: getAllowlistedKeyServers(NETWORK),
+    verifyKeyServers: false,
+  });
+
+  useEffect(() => {
+    console.log("DocumentViewer mounted", doc_id);
+
+    async function getFeedAndView() {
+      console.log("getFeedAndView called");
+      const feedData = await getFeed();
+      await onView(feedData.blobIds, feedData.allowlistId);
+    }
+
+    // Run initial load immediately
+    getFeedAndView();
+
+    // Set up interval
+    const intervalId = setInterval(getFeed, 3000);
+
+    return () => clearInterval(intervalId);
+  }, [doc_id, suiClient, WALRUS_PACKAGE_ID])
+
+  async function getFeed() {
+    const allowlist = await suiClient.getObject({
+      id: doc_id!,
+      options: { showContent: true },
+    });
+    const encryptedObjects = await suiClient
+      .getDynamicFields({
+        parentId: doc_id!,
+      })
+      .then((res) => res.data.map((obj) => obj.name.value as string));
+    const fields = (allowlist.data?.content as { fields: any })?.fields || {};
+    const feedData = {
+      allowlistId: doc_id!,
+      allowlistName: fields?.name,
+      blobIds: encryptedObjects,
+    };
+    console.log("feedData:", feedData);
+    await setFeed(feedData);
+    // await onView(feed!.blobIds, feed!.allowlistId)
+    // console.log("feedData:", feedData);
+    // console.log("decryptedFileUrls:", decryptedFileUrls);
+    return feedData;
+  }
+
+  const onView = async (blobIds: string[], allowlistId: string) => {
+    console.log("onView called");
+    console.log('blobIds:', blobIds);
+    console.log('allowlistId:', allowlistId);
+    if (blobIds.length === 0) {
+      setError('No files found for this allowlist.');
+      return;
+    }
+
+    if (
+      currentSessionKey &&
+      !currentSessionKey.isExpired() &&
+      currentSessionKey.getAddress() === account.address
+    ) {
+      const moveCallConstructor = constructMoveCall(WALRUS_PACKAGE_ID, allowlistId);
+      downloadAndDecrypt(
+        blobIds,
+        currentSessionKey,
+        suiClient,
+        client,
+        moveCallConstructor,
+        setError,
+        setDecryptedFileUrls,
+        setIsDialogOpen,
+        setReloadKey,
+      );
+      return;
+    }
+
+    setCurrentSessionKey(null);
+
+    const sessionKey = new SessionKey({
+      address: account.address,
+      packageId: WALRUS_PACKAGE_ID,
+      ttlMin: TTL_MIN,
+    });
+
+    try {
+      wallet.signPersonalMessage(
+        {
+          message: sessionKey.getPersonalMessage(),
+        },
+      ).then(async (result) => {
+        await sessionKey.setPersonalMessageSignature(result.signature);
+        const moveCallConstructor = constructMoveCall(WALRUS_PACKAGE_ID, allowlistId);
+        await downloadAndDecrypt(
+          blobIds,
+          sessionKey,
+          suiClient,
+          client,
+          moveCallConstructor,
+          setError,
+          setDecryptedFileUrls,
+          setIsDialogOpen,
+          setReloadKey,
+        );
+        setCurrentSessionKey(sessionKey);
+      }
+      );
+    } catch (error: any) {
+      console.error('Error:', error);
+    }
+  };
+
 
   const handleFieldClick = (fieldId: string) => {
     if (!connected) {
@@ -51,25 +204,25 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
   };
 
   const handleContainerClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!editMode || !isAddingSignature || !containerRef.current) return;
+    // if (!editMode || !isAddingSignature || !containerRef.current) return;
 
-    // Get click coordinates relative to the container
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    // // Get click coordinates relative to the container
+    // const rect = containerRef.current.getBoundingClientRect();
+    // const x = e.clientX - rect.left;
+    // const y = e.clientY - rect.top;
 
-    // Create a new signature field at this position
-    const newField: Partial<SignatureField> = {
-      id: nanoid(),
-      x,
-      y,
-      width: 200,
-      height: 60,
-    };
+    // // Create a new signature field at this position
+    // const newField: Partial<SignatureField> = {
+    //   id: nanoid(),
+    //   x,
+    //   y,
+    //   width: 200,
+    //   height: 60,
+    // };
 
-    setPendingField(newField);
+    // setPendingField(newField);
     setIsAddingSignature(false);
-    setActiveFieldId(newField.id as string);
+    // setActiveFieldId(newField.id as string);
     setIsSignModalOpen(true);
   };
 
@@ -122,6 +275,9 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
 
   return (
     <div className="relative mb-8">
+      {/* <Button onClick={() => onView(feed!.blobIds, feed!.allowlistId)}>
+        Download And Decrypt All Filesxx
+      </Button> */}
       {editMode && (
         <div className="flex items-center justify-between bg-gray-50 p-3 mb-4 rounded-md border border-gray-200">
           <div className="text-sm">
@@ -144,7 +300,8 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
               <Button
                 className="bg-sui-teal hover:bg-sui-teal/90"
                 size="sm"
-                onClick={() => setIsAddingSignature(true)}
+                // onClick={() => setIsAddingSignature(true)}
+                onClick={handleContainerClick}
               >
                 <FileSignature className="w-4 h-4 mr-1" />
                 Add Signature
@@ -156,19 +313,29 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
 
       <div
         ref={containerRef}
-        className={`doc-container ${
-          isAddingSignature ? "cursor-crosshair" : ""
-        }`}
+        className={`doc-container ${isAddingSignature ? "cursor-crosshair" : ""
+          }`}
         onClick={handleContainerClick}
       >
         <h1 className="text-2xl font-bold text-center mb-6">
           {document.title}
         </h1>
 
-        <p className="mb-4">
+        {/* <p className="mb-4">
           This is a sample document content. In a real application, this would
           contain the actual document content or render a PDF.
-        </p>
+        </p> */}
+        {decryptedFileUrls.map((decryptedFileUrl, index) => (
+          <div key={index} style={{ height: '1000px', marginBottom: '20px' }}>
+            <iframe
+              src={decryptedFileUrl}
+              title={`Decrypted PDF ${index + 1}`}
+              width="100%"
+              height="100%"
+              style={{ border: 'none' }}
+            />
+          </div>
+        ))}
 
         {document.signatureFields.map((field) => (
           <div
@@ -215,6 +382,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
 
       {connected && account && (
         <SignatureModal
+          doc_id={doc_id}
           isOpen={isSignModalOpen}
           onClose={() => {
             setIsSignModalOpen(false);
