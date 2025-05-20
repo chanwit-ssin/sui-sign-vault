@@ -323,7 +323,15 @@ export const uploadDocument = async (
             console.log("allowlistId:", allowlistId);
             console.log("cap_id:", cap_id);
 
+            const sleep = (ms: number) =>
+              new Promise((resolve) => setTimeout(resolve, ms));
+            console.log("start Sleep");
+            await sleep(40000);
+            console.log("Sleep done");
             const txp = new Transaction();
+
+            // Sleep helper
+
             txp.moveCall({
               target: `${WALRUS_PACKAGE_ID}::allowlist::publish`,
               arguments: [
@@ -333,6 +341,7 @@ export const uploadDocument = async (
               ],
             });
             txp.setGasBudget(10000000);
+
             const resultPublish = await wallet.signAndExecuteTransaction({
               transaction: txp,
             });
