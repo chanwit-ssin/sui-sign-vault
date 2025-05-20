@@ -31,16 +31,17 @@ const WalletConnectDialog: React.FC<WalletConnectDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md rounded-xl">
         <DialogHeader className="flex justify-between items-center pb-2">
-          <DialogTitle className="text-xl font-bold">
+          <DialogTitle className="text-xl font-bold mb-8">
             Connect Wallet
           </DialogTitle>
-          <Button
+          {/* <Button
             variant="ghost"
             size="icon"
             onClick={() => onOpenChange(false)}
-          >
-            <X />
-          </Button>
+          ></Button> */}
+          {/* <div className="flex justify-center">
+            <ConnectButton />
+          </div> */}
         </DialogHeader>
 
         <div className="py-4">
@@ -49,12 +50,9 @@ const WalletConnectDialog: React.FC<WalletConnectDialogProps> = ({
           </p>
 
           {/* ปุ่ม ConnectButton จะโชว์รายชื่อ wallets ให้เลือกอัตโนมัติ */}
-          <div className="flex justify-center">
-            <ConnectButton />
-          </div>
 
           {/* ถ้าเชื่อมต่อแล้ว ให้แสดง Disconnect */}
-          {account && (
+          {/* {account && (
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-700 mb-2">
                 Connected: {account.address}
@@ -63,7 +61,7 @@ const WalletConnectDialog: React.FC<WalletConnectDialogProps> = ({
                 Disconnect
               </Button>
             </div>
-          )}
+          )} */}
         </div>
       </DialogContent>
     </Dialog>

@@ -18,10 +18,7 @@ import { useWallet as useSuiWallet } from "@suiet/wallet-kit";
 import { bcs } from "@mysten/bcs";
 import { Transaction } from "@mysten/sui/transactions";
 import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
-import {
-  createAllowlist,
-  useSignAndExecuteService,
-} from "@/services/signAndExecuteService";
+import { createAllowlist } from "@/services/signAndExecuteService";
 import { SUIDOC_PACKAGE_ID, SUIDOC_MODULE } from "@/config/constants";
 
 // Constants
@@ -77,26 +74,22 @@ const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
 
     txb.moveCall({
       target: `${SUIDOC_PACKAGE_ID}::${SUIDOC_MODULE}::register_document`,
-      arguments: [
-        txb.pure.string(allowlistId),
-      ],
+      arguments: [txb.pure.string(allowlistId)],
     });
-  
+
     txb.setGasBudget(50_000_000); // 0.05 SUI
-  
+
     const result = await wallet.signAndExecuteTransaction({
-      transaction: txb
+      transaction: txb,
     });
-  
-    return await client.waitForTransaction({ 
+
+    return await client.waitForTransaction({
       digest: result.digest,
       options: {
         showEvents: true,
-        showObjectChanges: true
-      }
+        showObjectChanges: true,
+      },
     });
-
-
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -121,7 +114,7 @@ const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
     try {
       // Step 1: Upload document to your service
 
-      // const capId = await createAllowlist("test", wallet);
+      const capId = await createAllowlist(title, wallet);
 
       // const uploadResponse = await uploadDocument(
       //   title,
@@ -135,11 +128,12 @@ const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
       // In a real app, you'd generate these properly
       // const docHash = "sample-hash-" + Math.random().toString(36).substring(2);
       // const cid = "ipfs-cid-" + Math.random().toString(36).substring(2);
-      const allowlistId = "0x849faf967124f4baecfcafb66641be9f9d5aeb442ff68ff29f415e8a3fe95c85"
-      const txResult = await registerDocument(allowlistId);
+      // const allowlistId =
+      //   "0x849faf967124f4baecfcafb66641be9f9d5aeb442ff68ff29f415e8a3fe95c85";
+      // const txResult = await registerDocument(allowlistId);
 
-      toast.success("Document uploaded and registered successfully");
-      console.log("Transaction result:", txResult);
+      // toast.success("Document uploaded and registered successfully");
+      // console.log("Transaction result:", txResult);
 
       onSuccess();
       onClose();
