@@ -20,6 +20,7 @@ const Documents = () => {
     setIsLoading(true);
     try {
       const docs = await getDocuments();
+      console.log("Fetched documents:", docs);
       setDocuments(docs);
       setFilteredDocuments(docs);
     } catch (error) {
