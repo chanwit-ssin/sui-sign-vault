@@ -38,7 +38,6 @@ const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  // const { createAllowlist } = useSignAndExecuteService();
   const [title, setTitle] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -114,16 +113,19 @@ const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
     try {
       // Step 1: Upload document to your service
 
-      const capId = await createAllowlist("test", wallet);
+      const capId = await createAllowlist(title, wallet);
+      console.log("Cap ID at up:", capId);
 
-      // const uploadResponse = await uploadDocument(
-      //   title,
-      //   account.address,
-      //   file,
-      //   PACKAGE_ID,
-      //   rpcUrl
-      //   // capId
-      // );
+      const uploadResponse = await uploadDocument(
+        title,
+        account.address,
+        file,
+        rpcUrl,
+        capId.capId,
+        capId.allowlistObjectId,
+        wallet,
+        client
+      );
       // Step 2: Register document on blockchain
       // In a real app, you'd generate these properly
       // const docHash = "sample-hash-" + Math.random().toString(36).substring(2);

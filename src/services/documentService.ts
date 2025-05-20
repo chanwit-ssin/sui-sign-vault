@@ -2,7 +2,7 @@ import { Document, SignatureField, UploadedDoc } from "@/types";
 import { fromHex, toHex } from "@mysten/sui/utils";
 import { SuiClient } from "@mysten/sui/client";
 import { SealClient, getAllowlistedKeyServers } from "@mysten/seal";
-import { PACKAGE_ID, WALRUS_SERVICES } from "@/config/constants";
+import { WALRUS_PACKAGE_ID, WALRUS_SERVICES } from "@/config/constants";
 import { useSignAndExecuteTransaction, useSuiClient } from "@mysten/dapp-kit";
 import { useNetworkVariable } from "@/config/networkConfig";
 import { useState } from "react";
@@ -43,32 +43,38 @@ const mockDocuments: Document[] = [
 
 /**
  * Fetches the signature history for a document
- * 
+ *
  * @param documentId The ID of the document
  * @returns Promise resolving to an array of signature records
  */
-export const getDocumentSignatureHistory = async (documentId: string): Promise<SignatureRecord[]> => {
+export const getDocumentSignatureHistory = async (
+  documentId: string
+): Promise<SignatureRecord[]> => {
   try {
     // In a real implementation, you would fetch this data from your backend or blockchain
     // Example:
     // const response = await fetch(`${API_URL}/documents/${documentId}/signatures`);
     // const data = await response.json();
     // return data;
-    
+
     // For now, return mock data for demonstration
     return [
       {
         signerAddress: "0x4543...4be8",
-        signature: "0x7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b",
+        signature:
+          "0x7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b",
         timestamp: Date.now() - 86400000, // 1 day ago
-        transactionId: "0x123456789abcdef123456789abcdef123456789abcdef123456789abcdef1234"
+        transactionId:
+          "0x123456789abcdef123456789abcdef123456789abcdef123456789abcdef1234",
       },
       {
         signerAddress: "0x9876...5432",
-        signature: "0x1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b",
+        signature:
+          "0x1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b",
         timestamp: Date.now() - 172800000, // 2 days ago
-        transactionId: "0xabcdef123456789abcdef123456789abcdef123456789abcdef123456789abcde"
-      }
+        transactionId:
+          "0xabcdef123456789abcdef123456789abcdef123456789abcdef123456789abcde",
+      },
     ];
   } catch (error) {
     console.error("Error fetching signature history:", error);
@@ -173,10 +179,14 @@ export const uploadDocument = async (
   file: File,
   rpcUrl: string,
   cap_id: string,
+  allowlistId: string,
+  wallet: any,
+  client: any,
   walrusServiceId: string = WALRUS_SERVICES[0].id
 ): Promise<Document> => {
   // const [info, setInfo] = useState<Data | null>(null);
-
+  // console.log("cap_id at docser", cap_id);
+  // console.log("allowlistId at docser", allowlistId);
   const SUI_VIEW_TX_URL = `https://suiscan.xyz/testnet/tx`;
   const SUI_VIEW_OBJECT_URL = `https://suiscan.xyz/testnet/object`;
   let info: Data | null = null;
@@ -221,13 +231,14 @@ export const uploadDocument = async (
       reader.onerror = () => rej(reader.error);
       reader.readAsDataURL(file);
     });
-    console.log("Image preview Data URL:", dataUrl.slice(0, 100)); // แค่ส่วนต้นๆ
+    // console.log("Image preview Data URL:", dataUrl.slice(0, 100));
+    // แค่ส่วนต้นๆ
   }
 
-  // 2) สร้าง blob ID (policyId + nonce)
-  const policyBytes = fromHex(PACKAGE_ID);
-  const nonce = crypto.getRandomValues(new Uint8Array(5));
-  const idHex = toHex(new Uint8Array([...policyBytes, ...nonce]));
+  // // 2) สร้าง blob ID (policyId + nonce)
+  // const policyBytes = fromHex(WALRUS_PACKAGE_ID);
+  // const nonce = crypto.getRandomValues(new Uint8Array(5));
+  // const idHex = toHex(new Uint8Array([...policyBytes, ...nonce]));
 
   // 4) อัปโหลด ciphertext ไปยัง Walrus
   function getAggregatorUrl(path: string): string {
@@ -239,7 +250,7 @@ export const uploadDocument = async (
   function getPublisherUrl(path: string): string {
     const service = WALRUS_SERVICES.find((s) => s.id === walrusServiceId);
     const cleanPath = path.replace(/^\/+/, "").replace(/^v1\//, "");
-    console.log("getPublisherUrl", `${service?.publisherUrl}/v1/${cleanPath}`);
+    // console.log("getPublisherUrl", `${service?.publisherUrl}/v1/${cleanPath}`);
     return `${service?.publisherUrl}/v1/${cleanPath}`;
   }
 
@@ -251,20 +262,47 @@ export const uploadDocument = async (
           const result = event.target.result;
           if (result instanceof ArrayBuffer) {
             const nonce = crypto.getRandomValues(new Uint8Array(5));
-            const policyObjectBytes = fromHex(uploadedBy);
+            const policyObjectBytes = fromHex(allowlistId);
             const id = toHex(new Uint8Array([...policyObjectBytes, ...nonce]));
 
             const { encryptedObject: encryptedBytes } =
               await sealClient.encrypt({
                 threshold: 2,
-                packageId: PACKAGE_ID,
+                packageId: WALRUS_PACKAGE_ID,
                 id,
                 data: new Uint8Array(result),
               });
             const storageInfo = await storeBlob(encryptedBytes);
-            displayUpload(storageInfo.info, file.type);
+            const data = await displayUpload(storageInfo.info, file.type);
+            console.log("Storage info 2:", data);
+            console.log(
+              "///////////////////////////////////////////////////////////////"
+            );
+            console.log("Blob ID:", data.blobId);
+            console.log("allowlistId:", allowlistId);
+            console.log("cap_id:", cap_id);
 
-            // setIsUploading(false);
+            const txp = new Transaction();
+            txp.moveCall({
+              target: `${WALRUS_PACKAGE_ID}::allowlist::publish`,
+              arguments: [
+                txp.object(allowlistId),
+                txp.object(cap_id),
+                txp.pure.string(data.blobId),
+              ],
+            });
+            txp.setGasBudget(10000000);
+            const resultPublish = await wallet.signAndExecuteTransaction({
+              transaction: txp,
+            });
+
+            const waitResultPublish = await client.waitForTransaction({
+              digest: resultPublish.digest,
+              options: {
+                showEvents: true,
+                showObjectChanges: true,
+              },
+            });
           } else {
             console.error("Unexpected result type:", typeof result);
             // setIsUploading(false);
@@ -276,9 +314,9 @@ export const uploadDocument = async (
       console.error("No file selected");
     }
   };
+  handleSubmit();
 
-  const displayUpload = (storage_info: any, media_type: any) => {
-    console.log("Walrus upload response:", info);
+  const displayUpload = async (storage_info: any, media_type: any) => {
     if ("alreadyCertified" in storage_info) {
       info = {
         status: "Already certified",
@@ -310,6 +348,8 @@ export const uploadDocument = async (
     } else {
       throw Error("Unhandled successful response!");
     }
+    console.log("Storage info 1:", info);
+    return info;
   };
 
   const storeBlob = (encryptedData: Uint8Array) => {
@@ -331,41 +371,15 @@ export const uploadDocument = async (
     });
   };
 
-  // Define capId in the outer scope so it can be used later
-
-  // Call createAllowlist after its declaration
-
   // async function handlePublish(
   //   wl_id: string,
   //   cap_id: string,
   //   moduleName: string
   // ) {
-  //   const tx = new Transaction();
-  //   tx.moveCall({
-  //     target: `${PACKAGE_ID}::${moduleName}::publish`,
-  //     arguments: [
-  //       tx.object(wl_id),
-  //       tx.object(cap_id),
-  //       tx.pure.string(info!.blobId),
-  //     ],
-  //   });
 
-  //   tx.setGasBudget(10000000);
-  //   signAndExecute(
-  //     {
-  //       transaction: tx,
-  //     },
-  //     {
-  //       onSuccess: async (result) => {
-  //         console.log("res", result);
-  //         alert(
-  //           "Blob attached successfully, now share the link or upload more."
-  //         );
-  //       },
-  //     }
-  //   );
+  //   console.log("Wait result add:", waitResultPublish);
   // }
-  // handlePublish("wl_id", capId, "allowlist"); // <-- Remove this line, now called after capId is set
+
   // 5) สร้าง Document record พร้อม walrus blobId
   const newDoc: Document & { walrusBlobId?: string } = {
     id: `doc-${Date.now()}`,
@@ -375,7 +389,7 @@ export const uploadDocument = async (
     status: "draft",
     signatureFields: [],
     sharedWith: [],
-    walrusBlobId: idHex,
+    walrusBlobId: info?.blobId,
   };
 
   // 6) บันทึกลง mock (หรือส่งไป backend จริง)
