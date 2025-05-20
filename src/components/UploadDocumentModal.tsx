@@ -114,7 +114,8 @@ const UploadDocumentModal: React.FC<UploadDocumentModalProps> = ({
       // Step 1: Upload document to your service
 
       const capId = await createAllowlist(title, wallet);
-      console.log("Cap ID at up:", capId);
+      console.log("Cap ID at up:", capId.capId);
+      console.log("allowlistObjectId at up:", capId.allowlistObjectId);
 
       const uploadResponse = await uploadDocument(
         title,
