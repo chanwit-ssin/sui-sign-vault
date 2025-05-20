@@ -10,7 +10,7 @@ import {
 import { useWallet as useSuiWallet } from "@suiet/wallet-kit";
 import { Plus, Loader2, AlertCircle } from "lucide-react";
 import UploadDocumentModal from "@/components/UploadDocumentModal";
-import { getAllDocumentObjects } from "@/services/signAndExecuteService";
+import { getAllDocumentObjects } from "@/services/documentService";
 import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
 import { NETWORK } from "@/config/constants";
 
