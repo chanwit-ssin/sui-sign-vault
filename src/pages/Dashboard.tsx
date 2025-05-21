@@ -35,7 +35,6 @@ const Dashboard = () => {
     setIsLoading(true);
     try {
       const docs = await getAllDocumentObjects(client, account.address);
-      console.log("raw docs:", docs);
       setRawDocs(docs);
     } catch (error) {
       console.error("Error fetching Sui objects:", error);
@@ -80,7 +79,7 @@ const Dashboard = () => {
         ) : rawDocs.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {rawDocs.map((doc) => (
-              <Card key={doc.id}>
+              <Card key={doc.content.doc_id}>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm font-medium text-gray-700">
                     {doc.content?.title ?? doc.id}

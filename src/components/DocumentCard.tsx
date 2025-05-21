@@ -104,7 +104,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document }) => {
         </div>
       </CardContent> */}
       <CardFooter>
-        <Link to={`/documents/${document.id}`} className="w-full">
+        <Link to={`/documents/${document.content.doc_id}`} className="w-full">
           <Button variant="outline" className="w-full">
             View Document
           </Button>
