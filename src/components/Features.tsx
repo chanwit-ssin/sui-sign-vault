@@ -58,10 +58,13 @@ const Features = () => {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </ConnectButton>
 
-                <Button variant="outline" size="lg" asChild>
+                {/* <Button variant="outline" size="lg" asChild>
                   <Link to="/documents">
                     Browse Documents <FileText className="ml-2 h-5 w-5" />
                   </Link>
+                </Button> */}
+                <Button variant="outline" size="lg">
+                  Browse Documents <FileText className="ml-2 h-5 w-5" />
                 </Button>
               </div>
             </div>
@@ -331,9 +334,9 @@ const Features = () => {
           >
             Connect Wallet & Get Started
           </Button> */}
-          <ConnectButton className="bg-sui-navy hover:bg-sui-navy/90 ">
+          <Button className="bg-sui-navy hover:bg-sui-navy/90 ">
             Connect Wallet & Get Started
-          </ConnectButton>
+          </Button>
           <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
               <p className="text-3xl font-bold">10k+</p>
