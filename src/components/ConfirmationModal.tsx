@@ -41,7 +41,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   useEffect(() => {
     // Reset countdown and show payload when modal opens
     if (isOpen) {
-      setCountdown(60)
+      setCountdown(50)
       setButtonEnabled(false)
 
       // Start countdown timer
