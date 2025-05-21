@@ -41,10 +41,13 @@ const Features = () => {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </ConnectButton>
 
-                <Button variant="outline" size="lg" asChild>
+                {/* <Button variant="outline" size="lg" asChild>
                   <Link to="/documents">
                     Browse Documents <FileText className="ml-2 h-5 w-5" />
                   </Link>
+                </Button> */}
+                <Button variant="outline" size="lg">
+                  Browse Documents <FileText className="ml-2 h-5 w-5" />
                 </Button>
               </div> */}
             </div>
