@@ -22,6 +22,7 @@ import {
 const Features = () => {
   return (
     <div className="min-h-screen">
+      {/* Hero Section */}
       <section className="py-20 bg-gradient-to-b from-white to-gray-50">
         <div className="container px-4 mx-auto">
           <div className="flex flex-col md:flex-row gap-12 items-center justify-center">
@@ -41,11 +42,11 @@ const Features = () => {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </ConnectButton>
 
-                {/* <Button variant="outline" size="lg" asChild>
+                {<Button variant="outline" size="lg" asChild>
                   <Link to="/documents">
                     Browse Documents <FileText className="ml-2 h-5 w-5" />
                   </Link>
-                </Button> */}
+                </Button>}
                 <Button variant="outline" size="lg">
                   Browse Documents <FileText className="ml-2 h-5 w-5" />
                 </Button>
