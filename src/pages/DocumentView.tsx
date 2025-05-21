@@ -2,21 +2,31 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Document, SignatureRecord } from "@/types";
-import { getDocumentById, shareDocument, getDocumentSignatureHistory } from "@/services/documentService";
-import { ArrowLeft, Loader2, FileText, CheckCircle2, Pen, Share2, Users, History, Clock, Copy, ExternalLink } from 'lucide-react';
+import {
+  getDocumentById,
+  shareDocument,
+  getDocumentSignatureHistory,
+} from "@/services/documentService";
+import {
+  ArrowLeft,
+  Loader2,
+  FileText,
+  CheckCircle2,
+  Pen,
+  Share2,
+  Users,
+  History,
+  Clock,
+  Copy,
+  ExternalLink,
+} from "lucide-react";
 import { useWallet as useSuiWallet } from "@suiet/wallet-kit";
 import DocumentViewer from "@/components/DocumentViewer";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/lib/toast";
 import ShareModal from "@/components/ShareModal";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NETWORK } from "@/config/constants";
-import { sign } from "crypto";
 import { useSuiClient } from "@mysten/dapp-kit";
 
 const DocumentView = () => {
@@ -25,12 +35,13 @@ const DocumentView = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [mode, setMode] = useState<"view" | "edit">("view");
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [signatureHistory, setSignatureHistory] = useState<SignatureRecord[]>([]);
+  const [signatureHistory, setSignatureHistory] = useState<SignatureRecord[]>(
+    []
+  );
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const navigate = useNavigate();
   const { account, connected } = useSuiWallet();
   const suiClient = useSuiClient();
-
 
   const loadDocument = async () => {
     if (!id) return;
@@ -52,7 +63,6 @@ const DocumentView = () => {
         allowlistName: fields?.name,
         blobIds: encryptedObjects,
       };
-      console.log("feedData:", feedData);
 
       // const doc = await getDocumentById(id);
       const doc = {
@@ -63,12 +73,11 @@ const DocumentView = () => {
         status: fields?.status || "draft",
         signatureFields: fields?.signatureFields || [],
         sharedWith: fields?.sharedWith || [],
-      }
+      };
       if (doc) {
         setDocument(doc);
         // Load signature history after document is loaded
         loadSignatureHistory();
-      } else {
       }
     } catch (error) {
       console.error("Error fetching document:", error);
@@ -80,7 +89,6 @@ const DocumentView = () => {
   const loadSignatureHistory = async () => {
     if (!id) return;
 
-
     try {
       const signature_fetch = await getDocumentSignatureHistory(id);
       // check the new signature history with signatureHistory to set the new signature history
@@ -89,14 +97,24 @@ const DocumentView = () => {
       // });
       // setSignatureHistory(history);
       console.log("signatureHistory", signatureHistory);
-      console.log("ssssss",
+      console.log(
+        "ssssss",
         signature_fetch.filter((record) => {
-          return !signatureHistory.some((existingRecord) => existingRecord.transactionId !== record.transactionId)
-        }))
+          return !signatureHistory.some(
+            (existingRecord) =>
+              existingRecord.transactionId !== record.transactionId
+          );
+        })
+      );
       // check if signature_fetch i)s new for signatureHistory
-      if (signature_fetch.filter((record) => {
-        return signatureHistory.some((existingRecord) => existingRecord.transactionId !== record.transactionId);
-      })) {
+      if (
+        signature_fetch.filter((record) => {
+          return signatureHistory.some(
+            (existingRecord) =>
+              existingRecord.transactionId !== record.transactionId
+          );
+        })
+      ) {
         setIsLoadingHistory(true);
         setSignatureHistory(signature_fetch);
       }
@@ -174,7 +192,10 @@ const DocumentView = () => {
   };
 
   const openExplorer = (transactionId: string) => {
-    window.open(`https://explorer.sui.io/txblock/${transactionId}?network=${NETWORK}`, '_blank');
+    window.open(
+      `https://explorer.sui.io/txblock/${transactionId}?network=${NETWORK}`,
+      "_blank"
+    );
   };
 
   return (
@@ -285,7 +306,10 @@ const DocumentView = () => {
                   ) : signatureHistory.length > 0 ? (
                     <div className="space-y-4">
                       {signatureHistory.map((record, index) => (
-                        <div key={index} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                        <div
+                          key={index}
+                          className="border-b border-gray-100 pb-4 last:border-0 last:pb-0"
+                        >
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center">
                               <CheckCircle2 className="h-4 w-4 text-green-500 mr-1" />
@@ -293,24 +317,32 @@ const DocumentView = () => {
                             </div>
                             <div className="flex items-center text-sm text-gray-600">
                               <Clock className="h-4 w-4 text-gray-400 mr-1" />
-                              <span>{new Date(record.timestamp).toLocaleString()}</span>
+                              <span>
+                                {new Date(record.timestamp).toLocaleString()}
+                              </span>
                             </div>
                           </div>
 
                           <div className="flex items-center mb-2">
-                            <span className="font-mono text-sm">{formatAddress(record.signerAddress)}</span>
+                            <span className="font-mono text-sm">
+                              {formatAddress(record.signerAddress)}
+                            </span>
                             <Button
                               variant="ghost"
                               size="sm"
                               className="h-6 w-6 p-0 ml-1"
-                              onClick={() => copyToClipboard(record.signerAddress)}
+                              onClick={() =>
+                                copyToClipboard(record.signerAddress)
+                              }
                             >
                               <Copy className="h-3 w-3 text-gray-400" />
                             </Button>
                           </div>
 
                           <div className="mb-2">
-                            <div className="text-xs text-gray-500 mb-1">Transaction ID:</div>
+                            <div className="text-xs text-gray-500 mb-1">
+                              Transaction ID:
+                            </div>
                             <div className="flex items-center">
                               <span className="font-mono text-xs truncate max-w-[200px]">
                                 {record.transactionId}
@@ -319,7 +351,9 @@ const DocumentView = () => {
                                 variant="ghost"
                                 size="sm"
                                 className="h-6 w-6 p-0 ml-1"
-                                onClick={() => copyToClipboard(record.transactionId)}
+                                onClick={() =>
+                                  copyToClipboard(record.transactionId)
+                                }
                               >
                                 <Copy className="h-3 w-3 text-gray-400" />
                               </Button>
@@ -327,7 +361,9 @@ const DocumentView = () => {
                                 variant="ghost"
                                 size="sm"
                                 className="h-6 w-6 p-0 ml-1"
-                                onClick={() => openExplorer(record.transactionId)}
+                                onClick={() =>
+                                  openExplorer(record.transactionId)
+                                }
                               >
                                 <ExternalLink className="h-3 w-3 text-gray-400" />
                               </Button>
@@ -335,7 +371,9 @@ const DocumentView = () => {
                           </div>
 
                           <div>
-                            <div className="text-xs text-gray-500 mb-1">Signature:</div>
+                            <div className="text-xs text-gray-500 mb-1">
+                              Signature:
+                            </div>
                             <div className="flex items-center">
                               <div className="font-mono text-xs bg-gray-50 p-2 rounded overflow-x-auto max-w-full">
                                 {record.signature.length > 20
@@ -346,7 +384,9 @@ const DocumentView = () => {
                                 variant="ghost"
                                 size="sm"
                                 className="h-6 w-6 p-0 ml-1 flex-shrink-0"
-                                onClick={() => copyToClipboard(record.signature)}
+                                onClick={() =>
+                                  copyToClipboard(record.signature)
+                                }
                               >
                                 <Copy className="h-3 w-3 text-gray-400" />
                               </Button>
