@@ -27,7 +27,7 @@ const App = () => (
             <main className="flex-1 container mx-auto">
               <Routes>
                 <Route path="/" element={<Index />} />
-                <Route path="/dashboard" element={<Dashboard />} />
+                {/* <Route path="/dashboard" element={<Dashboard />} /> */}
                 <Route path="/documents" element={<Documents />} />
                 <Route path="/verify" element={<VerifySig />} />
                 <Route path="/documents/:id" element={<DocumentView />} />

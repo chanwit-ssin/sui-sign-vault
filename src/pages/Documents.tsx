@@ -1,30 +1,31 @@
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Document } from "@/types";
-import { getDocuments } from "@/services/documentService";
-import { ConnectButton, useWallet } from "@suiet/wallet-kit";
 import { Plus, Search, FileText, Loader2 } from "lucide-react";
 import DocumentCard from "@/components/DocumentCard";
-import { Input } from "@/components/ui/input";
 import UploadDocumentModal from "@/components/UploadDocumentModal";
+import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
+import { NETWORK } from "@/config/constants";
+import { useWallet as useSuiWallet } from "@suiet/wallet-kit";
+import { getAllDocumentObjects } from "@/services/documentService";
+import { RawDocument } from "@/types";
 
 const Documents = () => {
-  const [documents, setDocuments] = useState<Document[]>([]);
-  const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([]);
+  const [rawDocs, setRawDocs] = useState<RawDocument[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const { account } = useWallet();
+  const { account } = useSuiWallet();
+  const client = new SuiClient({ url: getFullnodeUrl(NETWORK) });
 
   const loadDocuments = async () => {
-    setIsLoading(true);
+    if (!account) return;
+
     try {
-      const docs = await getDocuments();
-      console.log("Fetched documents:", docs);
-      setDocuments(docs);
-      setFilteredDocuments(docs);
+      setIsLoading(true);
+      const docs = await getAllDocumentObjects(client, account.address);
+      console.log("raw docs:", docs);
+      setRawDocs(docs);
     } catch (error) {
-      console.error("Error fetching documents:", error);
+      console.error("Error fetching Sui objects:", error);
     } finally {
       setIsLoading(false);
     }
@@ -32,18 +33,8 @@ const Documents = () => {
 
   useEffect(() => {
     loadDocuments();
-  }, []);
-
-  useEffect(() => {
-    if (searchQuery.trim() === "") {
-      setFilteredDocuments(documents);
-    } else {
-      const filtered = documents.filter((doc) =>
-        doc.title.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredDocuments(filtered);
-    }
-  }, [searchQuery, documents]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [account]);
 
   return (
     <div className="p-6">
@@ -59,7 +50,7 @@ const Documents = () => {
         </Button>
       </div>
 
-      <div className="relative mb-6">
+      {/* <div className="relative mb-6">
         <div className="absolute inset-y-0 start-0 flex items-center pl-3 pointer-events-none">
           <Search className="w-4 h-4 text-gray-500" />
         </div>
@@ -70,15 +61,15 @@ const Documents = () => {
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10"
         />
-      </div>
+      </div> */}
 
       {isLoading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-sui-teal" />
         </div>
-      ) : filteredDocuments.length > 0 ? (
+      ) : rawDocs.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredDocuments.map((doc) => (
+          {rawDocs.map((doc) => (
             <DocumentCard key={doc.id} document={doc} />
           ))}
         </div>
@@ -88,23 +79,21 @@ const Documents = () => {
           <h3 className="mt-2 text-sm font-semibold text-gray-900">
             No documents found
           </h3>
-          <p className="mt-1 text-sm text-gray-500">
+          {/* <p className="mt-1 text-sm text-gray-500">
             {searchQuery
               ? "Try adjusting your search query."
               : "Get started by creating a new document."}
-          </p>
-          {!searchQuery && (
-            <div className="mt-6">
-              <Button
-                onClick={() => setIsUploadModalOpen(true)}
-                disabled={!account}
-                className="bg-sui-teal hover:bg-sui-teal/90"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                New Document
-              </Button>
-            </div>
-          )}
+          </p> */}
+          <div className="mt-6">
+            <Button
+              onClick={() => setIsUploadModalOpen(true)}
+              disabled={!account}
+              className="bg-sui-teal hover:bg-sui-teal/90"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              New Document
+            </Button>
+          </div>
         </div>
       )}
 

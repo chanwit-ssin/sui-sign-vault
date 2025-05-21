@@ -3,17 +3,28 @@ export interface WalletAccount {
   publicKey: string;
 }
 
-export interface Document {
+// export interface Document {
+//   id: string;
+//   title: string;
+//   uploadedBy: string;
+//   uploadedAt: Date;
+//   status: "draft" | "pending" | "signed" | "completed";
+//   content?: string;
+//   fileUrl?: string;
+//   signatureFields: SignatureField[];
+//   sharedWith?: string[]; // Array of wallet addresses the document is shared with
+// }
+
+export type RawDocument = {
   id: string;
-  title: string;
-  uploadedBy: string;
-  uploadedAt: Date;
-  status: "draft" | "pending" | "signed" | "completed";
-  content?: string;
-  fileUrl?: string;
-  signatureFields: SignatureField[];
-  sharedWith?: string[]; // Array of wallet addresses the document is shared with
-}
+  type: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  owner: any;
+  version: number;
+  digest: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  content?: Record<string, any>;
+};
 
 export interface SignatureField {
   id: string;

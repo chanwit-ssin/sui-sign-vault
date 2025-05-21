@@ -1,12 +1,7 @@
-import React, { useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { ConnectButton, useWallet } from "@suiet/wallet-kit";
 import {
   FileText,
   ShieldCheck,
   Zap,
-  ArrowRight,
   Lock,
   Link as LinkIcon,
 } from "lucide-react";
@@ -14,7 +9,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -24,24 +18,13 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Features = () => {
-  const { account } = useWallet();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (account) {
-      navigate("/dashboard");
-    }
-  }, [account, navigate]);
-
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
       <section className="py-20 bg-gradient-to-b from-white to-gray-50">
         <div className="container px-4 mx-auto">
-          <div className="flex flex-col md:flex-row gap-12 items-center">
+          <div className="flex flex-col md:flex-row gap-12 items-center justify-center">
             <div className="md:w-1/2 space-y-6">
               <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight">
                 Secure Document Signing{" "}
@@ -52,7 +35,7 @@ const Features = () => {
                 cryptographic proof on the Sui blockchain, providing immutable
                 records and enhanced security.
               </p>
-              <div className="pt-4 flex flex-col sm:flex-row gap-4">
+              {/* <div className="pt-4 flex flex-col sm:flex-row gap-4">
                 <ConnectButton className="bg-sui-navy hover:bg-sui-navy/90 inline-flex items-center px-4 py-3 rounded ">
                   <span>Connect Wallet</span>
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -63,12 +46,17 @@ const Features = () => {
                     Browse Documents <FileText className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
-              </div>
+              </div> */}
             </div>
-            <div className="md:w-1/2">
+            <div className="">
               <div className="bg-white p-6 rounded-xl shadow-xl border border-gray-100">
                 <div className="w-full aspect-[4/3] bg-gray-100 rounded-lg flex items-center justify-center mb-4">
-                  <FileText className="h-20 w-20 text-sui-teal opacity-50" />
+                  {/* <FileText className="h-20 w-20 text-sui-teal opacity-50" /> */}
+                  <img
+                    src="/docWithSign.png"
+                    alt="Document preview"
+                    // className="h-20 w-20 object-contain opacity-80"
+                  />
                 </div>
                 <div className="flex justify-between items-center border-t border-gray-100 pt-4">
                   <div>
@@ -324,16 +312,6 @@ const Features = () => {
             Join thousands of users who trust SuiDoc Vault for their important
             documents
           </p>
-          {/* <Button
-            
-            size="lg"
-            className="bg-sui-teal hover:bg-sui-teal/90"
-          >
-            Connect Wallet & Get Started
-          </Button> */}
-          <ConnectButton className="bg-sui-navy hover:bg-sui-navy/90 ">
-            Connect Wallet & Get Started
-          </ConnectButton>
           <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
               <p className="text-3xl font-bold">10k+</p>
