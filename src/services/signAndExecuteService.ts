@@ -2,9 +2,6 @@
 import { Transaction } from "@mysten/sui/transactions";
 import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
 import {
-  SUIDOC_MODULE,
-  SUIDOC_PACKAGE_ID,
-  PACKAGE_ID,
   WALRUS_PACKAGE_ID,
 } from "@/config/constants";
 

@@ -5,9 +5,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { ConnectButton, useWallet } from "@suiet/wallet-kit";
-import { X } from "lucide-react";
+import { useWallet } from "@suiet/wallet-kit";
+
 
 interface WalletConnectDialogProps {
   open: boolean;

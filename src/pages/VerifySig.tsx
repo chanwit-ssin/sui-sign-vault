@@ -98,22 +98,21 @@ const VerifySignature = () => {
   return (
     <div className="p-6">
       <div className="mb-6">
-        {/* <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigate(-1)}
-          className="mb-4"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
-        </Button> */}
-
-        <div className="flex items-center mb-6">
+        <div className="flex items-center mb-2">
           <FileCheck className="h-6 w-6 text-sui-teal mr-2" />
-          <h1 className="text-2xl font-bold text-gray-900">Verify Document Signature</h1>
-        </div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Verify Document Signature{' '}
+            <span className="bg-red-100 text-red-700 px-2 py-0.5 rounded">
+              (Preview Mode)
+            </span>
+          </h1>
 
-        <Card className="mb-6">
+        </div>
+        <span className="text-sm text-gray-500 ml-2 text-red-700">
+          (This is a preview mode. The verification signature will always be valid.)
+        </span>
+
+        <Card className="mt-5 mb-6">
           <CardHeader>
             <CardTitle>Document Verification</CardTitle>
             <CardDescription>

@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, FileText, Loader2 } from "lucide-react";
+import { RawDocument, Cap, CardItem } from "@/types";
 import DocumentCard from "@/components/DocumentCard";
-import UploadDocumentModal from "@/components/UploadDocumentModal";
-import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
-import { NETWORK } from "@/config/constants";
 import { useWallet as useSuiWallet } from "@suiet/wallet-kit";
+import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
+import { NETWORK, WALRUS_PACKAGE_ID } from "@/config/constants";
+import { Plus, Search, FileText, Loader2 } from "lucide-react";
+import UploadDocumentModal from "@/components/UploadDocumentModal";
 import { getAllDocumentObjects } from "@/services/documentService";
-import { RawDocument } from "@/types";
 
 const Documents = () => {
   const [rawDocs, setRawDocs] = useState<RawDocument[]>([]);
@@ -16,14 +16,76 @@ const Documents = () => {
   const { account } = useSuiWallet();
   const client = new SuiClient({ url: getFullnodeUrl(NETWORK) });
 
+  const getAllAllowlists = async () => {
+    const res = await client.getOwnedObjects({
+      owner: account?.address,
+      options: {
+        showContent: true,
+        showType: true,
+      },
+      filter: {
+        StructType: `${WALRUS_PACKAGE_ID}::allowlist::Cap`,
+      },
+    });
+    const caps = res.data
+      .map((obj) => {
+        const fields = (obj!.data!.content as { fields: any }).fields;
+        return {
+          id: fields?.id.id,
+          allowlist_id: fields?.allowlist_id,
+        };
+      })
+      .filter((item) => item !== null) as Cap[];
+    const cardItems: CardItem[] = await Promise.all(
+      caps.map(async (cap) => {
+        const allowlist = await client.getObject({
+          id: cap.allowlist_id,
+          options: { showContent: true },
+        });
+        const fields = (allowlist.data?.content as { fields: any })?.fields || {};
+        return {
+          cap_id: cap.id,
+          allowlist_id: cap.allowlist_id,
+          list: fields.list,
+          name: fields.name,
+        };
+      }),
+    );
+    return cardItems;
+  }
+
   const loadDocuments = async () => {
     if (!account) return;
 
     try {
       setIsLoading(true);
       const docs = await getAllDocumentObjects(client, account.address);
-      console.log("raw docs:", docs);
-      setRawDocs(docs);
+      const allowlists = await getAllAllowlists();
+      console.log("allowlists---:", allowlists);
+      console.log("docs---:", docs);
+      // Filter documents that are not allowlists and add allowlist.name in content
+
+      const filteredDocs = docs.map((doc) => {
+        const allowlist = allowlists.find(
+          (allowlist) => allowlist.allowlist_id === doc.content.doc_id,
+        );
+        console.log("allowlist++:", allowlist);
+        return {
+          ...doc,
+          content: {
+            ...doc.content,
+            name: allowlist?.name || null,
+          },
+        };
+      });
+
+      
+      console.log("filtered docs:", filteredDocs);
+      // const filteredDocs = docs.filter((doc) => {
+      //   return !allowlists.some((allowlist) => allowlist.cap_id === doc.id);
+      // });
+      // console.log("raw docs:", docs);
+      setRawDocs(filteredDocs);
     } catch (error) {
       console.error("Error fetching Sui objects:", error);
     } finally {
@@ -49,20 +111,6 @@ const Documents = () => {
           New Document
         </Button>
       </div>
-
-      {/* <div className="relative mb-6">
-        <div className="absolute inset-y-0 start-0 flex items-center pl-3 pointer-events-none">
-          <Search className="w-4 h-4 text-gray-500" />
-        </div>
-        <Input
-          type="search"
-          placeholder="Search documents..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
-        />
-      </div> */}
-
       {isLoading ? (
         <div className="flex justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-sui-teal" />
@@ -79,11 +127,6 @@ const Documents = () => {
           <h3 className="mt-2 text-sm font-semibold text-gray-900">
             No documents found
           </h3>
-          {/* <p className="mt-1 text-sm text-gray-500">
-            {searchQuery
-              ? "Try adjusting your search query."
-              : "Get started by creating a new document."}
-          </p> */}
           <div className="mt-6">
             <Button
               onClick={() => setIsUploadModalOpen(true)}
