@@ -1,7 +1,6 @@
 import React from "react";
 import {
   Card,
-  CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
@@ -10,9 +9,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FileText, CalendarClock } from "lucide-react";
-import { Document, RawDocument } from "@/types";
+import { RawDocument } from "@/types";
 import { Link } from "react-router-dom";
-import { format } from "date-fns";
 
 interface DocumentCardProps {
   document: RawDocument;
@@ -75,7 +73,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({ document }) => {
         <div className="flex justify-between items-start">
           <div className="flex items-center">
             <FileText className="w-5 h-5 text-sui-teal mr-2" />
-            <CardTitle className="text-lg">{getRandomDocumentName()}</CardTitle>
+            <CardTitle className="text-lg">{document.content.name}</CardTitle>
           </div>
           <Badge className={getStatusColor("draft")}>
             {/* {document.status.charAt(0).toUpperCase() + document.status.slice(1)} */}

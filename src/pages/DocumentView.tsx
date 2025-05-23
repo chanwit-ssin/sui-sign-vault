@@ -91,21 +91,14 @@ const DocumentView = () => {
 
     try {
       const signature_fetch = await getDocumentSignatureHistory(id);
-      // check the new signature history with signatureHistory to set the new signature history
-      // const history = signature_fetch.filter((record) => {
-      //   return !signatureHistory.some((existingRecord) => existingRecord.transactionId === record.transactionId);
-      // });
-      // setSignatureHistory(history);
-      console.log("signatureHistory", signatureHistory);
-      console.log(
-        "ssssss",
-        signature_fetch.filter((record) => {
-          return !signatureHistory.some(
-            (existingRecord) =>
-              existingRecord.transactionId !== record.transactionId
-          );
-        })
-      );
+      // console.log(
+      //   signature_fetch.filter((record) => {
+      //     return !signatureHistory.some(
+      //       (existingRecord) =>
+      //         existingRecord.transactionId !== record.transactionId
+      //     );
+      //   })
+      // );
       // check if signature_fetch i)s new for signatureHistory
       if (
         signature_fetch.filter((record) => {

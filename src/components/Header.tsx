@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { useWallet as suiWallet, ConnectButton } from "@suiet/wallet-kit";
 import { Button } from "@/components/ui/button";
-import { UserCircle, LogOut, Wallet } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
+import { UserCircle, LogOut, Wallet } from "lucide-react";
 import WalletConnectDialog from "@/components/WalletConnectDialog";
+import { useWallet as suiWallet, ConnectButton } from "@suiet/wallet-kit";
 
 const Header = () => {
   const { account, disconnect } = suiWallet();

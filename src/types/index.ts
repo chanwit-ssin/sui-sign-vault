@@ -3,18 +3,6 @@ export interface WalletAccount {
   publicKey: string;
 }
 
-// export interface Document {
-//   id: string;
-//   title: string;
-//   uploadedBy: string;
-//   uploadedAt: Date;
-//   status: "draft" | "pending" | "signed" | "completed";
-//   content?: string;
-//   fileUrl?: string;
-//   signatureFields: SignatureField[];
-//   sharedWith?: string[]; // Array of wallet addresses the document is shared with
-// }
-
 export type RawDocument = {
   id: string;
   type: string;
@@ -59,4 +47,16 @@ export interface Document {
   uploadedBy: string;
   sharedWith?: string[];
   // Add other document properties
+}
+
+export interface Cap {
+  id: string;
+  allowlist_id: string;
+}
+
+export interface CardItem {
+  cap_id: string;
+  allowlist_id: string;
+  list: string[];
+  name: string;
 }

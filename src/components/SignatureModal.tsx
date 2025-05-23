@@ -11,22 +11,12 @@ import {
 import { Loader2 } from "lucide-react";
 import { toast } from "@/lib/toast";
 import {
-  ConnectButton,
-  useAccountBalance,
   useWallet as useSuiWallet,
-  SuiChainId,
-  ErrorCode,
-  verifySignedMessage,
 } from "@suiet/wallet-kit";
 import { bcs } from "@mysten/bcs";
 import { Transaction } from "@mysten/sui/transactions";
-import { Ed25519Keypair, Ed25519PublicKey } from "@mysten/sui/keypairs/ed25519";
-import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
 import { SUIDOC_PACKAGE_ID, SUIDOC_MODULE } from "@/config/constants";
-// use getFullnodeUrl to define Devnet RPC location
-const rpcUrl = getFullnodeUrl("testnet");
-const suiClient = new SuiClient({ url: rpcUrl });
-const NETWORK = "devnet";
+
 
 // Example SHA-256 hash (64 hex chars = 32 bytes)
 const docHash =

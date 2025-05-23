@@ -3,19 +3,15 @@ import { fromHex, toHex } from "@mysten/sui/utils";
 import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
 import { SealClient, getAllowlistedKeyServers } from "@mysten/seal";
 import {
-  PACKAGE_ID,
   WALRUS_SERVICES,
   SUIDOC_PACKAGE_ID,
   SUIDOC_MODULE,
   NETWORK,
   WALRUS_PACKAGE_ID,
 } from "@/config/constants";
-import { useSignAndExecuteTransaction, useSuiClient } from "@mysten/dapp-kit";
-import { useNetworkVariable } from "@/config/networkConfig";
-import { useState } from "react";
 import { Transaction } from "@mysten/sui/transactions";
-
 import { SignatureRecord } from "@/types/index";
+
 // Mock documents for demonstration
 const client = new SuiClient({ url: getFullnodeUrl(NETWORK) });
 
@@ -167,13 +163,16 @@ export const getDocumentSignatureHistory = async (
 
           // Convert the signature array to a hex string (if needed)
           const signatureBytes = new Uint8Array(eventData.signature);
-          const signatureHex = Array.from(signatureBytes)
-            .map((byte) => byte.toString(16).padStart(2, "0"))
-            .join("");
+
+          // Convert to Uint8Array
+          const byteArray = new Uint8Array(signatureBytes);
+
+          // Convert to base64 string
+          const base64Signature = Buffer.from(byteArray).toString('base64');
 
           return {
             signerAddress: eventData.signer,
-            signature: `0x${signatureHex}`, // or use eventData.signature directly if it's already formatted
+            signature: `${base64Signature}`,
             timestamp: Number(event.timestampMs), // Convert string timestamp to number
             transactionId: event.id.txDigest,
           };
@@ -201,7 +200,7 @@ export const getDocumentById = async (
   // Simulate API call delay
   // await new Promise((resolve) => setTimeout(resolve, 500));
   // return (
-    
+
   // );
   return mockDocuments.find((doc) => doc.id === id);
 };
@@ -310,7 +309,7 @@ export const uploadDocument = async (
   const getServiceUrl = (type: 'aggregator' | 'publisher', path: string): string => {
     const service = WALRUS_SERVICES.find((s) => s.id === walrusServiceId);
     if (!service) throw new Error(`Service ${walrusServiceId} not found`);
-    
+
     const cleanPath = path.replace(/^\/+/, "").replace(/^v1\//, "");
     const baseUrl = type === 'aggregator' ? service.aggregatorUrl : service.publisherUrl;
     return `${baseUrl}/v1/${cleanPath}`;

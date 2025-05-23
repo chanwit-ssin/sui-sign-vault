@@ -1,22 +1,18 @@
-import React, { useState, useRef, useEffect } from "react";
+import { format } from "date-fns";
+import { toast } from "@/lib/toast";
+import { fromHex } from '@mysten/sui/utils';
+import SignatureModal from "./SignatureModal";
+import { useSuiClient } from "@mysten/dapp-kit";
+import { Button } from "@/components/ui/button";
 import { Document, SignatureField } from "@/types";
 import { FileSignature, Check, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import SignatureModal from "./SignatureModal";
 import { signDocument } from "@/services/documentService";
-import { toast } from "@/lib/toast";
-import { format } from "date-fns";
-import { nanoid } from "nanoid";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import React, { useState, useRef, useEffect } from "react";
 import { useWallet as useSuiWallet } from "@suiet/wallet-kit";
-import { useSuiClient } from "@mysten/dapp-kit";
-
-import { getAllowlistedKeyServers, SealClient, SessionKey } from '@mysten/seal';
-import { downloadAndDecrypt, getObjectExplorerLink, MoveCallConstructor } from '@/lib/utils';
-import { WALRUS_PACKAGE_ID, NETWORK } from "@/config/constants";
-import { set } from "date-fns";
-import { fromHex } from '@mysten/sui/utils';
 import { getFullnodeUrl, SuiClient } from '@mysten/sui/client';
+import { WALRUS_PACKAGE_ID, NETWORK } from "@/config/constants";
+import { downloadAndDecrypt, MoveCallConstructor } from '@/lib/utils';
+import { getAllowlistedKeyServers, SealClient, SessionKey } from '@mysten/seal';
 
 const x = new SuiClient({ url: getFullnodeUrl(NETWORK) });
 
@@ -111,9 +107,6 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
     };
     console.log("feedData:", feedData);
     await setFeed(feedData);
-    // await onView(feed!.blobIds, feed!.allowlistId)
-    // console.log("feedData:", feedData);
-    // console.log("decryptedFileUrls:", decryptedFileUrls);
     return feedData;
   }
 
@@ -275,9 +268,6 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
 
   return (
     <div className="relative mb-8">
-      {/* <Button onClick={() => onView(feed!.blobIds, feed!.allowlistId)}>
-        Download And Decrypt All Filesxx
-      </Button> */}
       {editMode && (
         <div className="flex items-center justify-between bg-gray-50 p-3 mb-4 rounded-md border border-gray-200">
           <div className="text-sm">
@@ -300,7 +290,6 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
               <Button
                 className="bg-sui-teal hover:bg-sui-teal/90"
                 size="sm"
-                // onClick={() => setIsAddingSignature(true)}
                 onClick={handleContainerClick}
               >
                 <FileSignature className="w-4 h-4 mr-1" />
@@ -315,16 +304,11 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
         ref={containerRef}
         className={`doc-container ${isAddingSignature ? "cursor-crosshair" : ""
           }`}
-        onClick={handleContainerClick}
+        // onClick={handleContainerClick}
       >
         <h1 className="text-2xl font-bold text-center mb-6">
           {document.title}
         </h1>
-
-        {/* <p className="mb-4">
-          This is a sample document content. In a real application, this would
-          contain the actual document content or render a PDF.
-        </p> */}
         {decryptedFileUrls.map((decryptedFileUrl, index) => (
           <div key={index} style={{ height: '1000px', marginBottom: '20px' }}>
             <iframe
